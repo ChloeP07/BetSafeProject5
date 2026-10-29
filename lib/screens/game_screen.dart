@@ -16,7 +16,8 @@ class GameScreen extends StatelessWidget {
       final game = api.state!.games.firstWhere((item) => item.id == gameId);
       final pick = api.state!.pickFor(gameId);
       final text = Theme.of(context).textTheme;
-      final finalGame = game.status == 'final';
+      final finalGame =
+          game.status == 'final' || (pick != null && pick.status != 'pending');
       return Scaffold(
         appBar: AppBar(
           title: Text(finalGame ? 'Final whistle' : 'Game progress'),
@@ -59,7 +60,9 @@ class GameScreen extends StatelessWidget {
                       if (finalGame) ...[
                         const SizedBox(height: 24),
                         Text(
-                          pick.status == 'won'
+                          pick.status == 'refunded'
+                              ? 'Your stake was returned.'
+                              : pick.status == 'won'
                               ? 'You called it!'
                               : 'Next game, new call.',
                           style: text.headlineSmall?.copyWith(
@@ -69,7 +72,9 @@ class GameScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          pick.status == 'won'
+                          pick.status == 'refunded'
+                              ? '${pick.payout} coins refunded for a tie or canceled game.'
+                              : pick.status == 'won'
                               ? '${pick.payout} coins returned. You earned a team collectible—find it in Collection.'
                               : 'Your stake was spent. Only virtual coins were at play.',
                           style: const TextStyle(height: 1.5),
@@ -92,7 +97,7 @@ class GameScreen extends StatelessWidget {
                   onRetry: api.busy ? null : () => api.refresh(),
                 ),
               const SizedBox(height: 24),
-              if (!finalGame && pick != null) ...[
+              if (!finalGame && pick != null && game.isSimulation) ...[
                 const Text(
                   'Demo controls advance a fictional game. These are not live NFL scores.',
                 ),
@@ -107,6 +112,19 @@ class GameScreen extends StatelessWidget {
                         : 'Finish simulation',
                   ),
                 ),
+              ],
+              if (!game.isSimulation) ...[
+                Text(api.state!.nfl.description, style: text.bodySmall),
+                const SizedBox(height: 12),
+                const Text(
+                  'Scores update from the NFL feed. Play-by-play is not included.',
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: api.busy ? null : () => api.refresh(),
+                  child: const Text('Refresh scores'),
+                ),
+                const SizedBox(height: 16),
               ],
               if (finalGame)
                 FilledButton(

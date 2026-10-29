@@ -88,6 +88,8 @@ class PicksScreen extends StatelessWidget {
                           ? 'WIN'
                           : pick.status == 'lost'
                           ? 'LOSS'
+                          : pick.status == 'refunded'
+                          ? 'REFUNDED'
                           : 'PENDING',
                       background: pick.status == 'lost'
                           ? BetSafeColors.clay

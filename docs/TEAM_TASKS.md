@@ -25,8 +25,10 @@ Replace Member 2–5 with names before sharing. Each member owns implementation,
 
 - [ ] Everyone can clone, install, start the server and launch the app
 - [ ] Verify Android emulator and iPhone simulator manually
-- [ ] Run GitHub Actions and download a successful APK artifact
-- [ ] Connect and verify real NFL schedules if provider access is available
+- [x] Confirm baseline GitHub Actions server, Android and iOS jobs pass
+- [ ] Download a successful APK artifact from GitHub Actions
+- [x] Connect real NFL schedules/scores and verify authenticated provider access
+- [ ] Verify updates during an actual live NFL game
 - [ ] Keep a labeled simulation path for the complete video loop
 - [ ] Integrate all required features by Thursday evening; Friday is for fixes and recording
 - [ ] Record narrated MP4, maximum 90 seconds; show running software
@@ -43,6 +45,10 @@ Replace Member 2–5 with names before sharing. Each member owns implementation,
 - [ ] Optional leaderboard/streaks only after the core loop works
 - [ ] Deploy HTTPS backend; disable demo controls; configure mobile release URLs
 - [ ] Device accessibility, network failure and release build checks
+
+## Branches and sports data
+
+See BRANCHES.md for each member’s branch and startup commands. See NFL_DATA.md for the recommended free NFL Games API, request limits and server/results integration agreement.
 
 ## Handoff rule
 

@@ -30,6 +30,12 @@ Errors: JSON `{ "error": "Readable message" }`. 400 invalid input, 404 missing r
 
 ## Real NFL provider handoff
 
-Real schedules/scores are not connected yet. Evaluate TheSportsDB's documented NFL event endpoints on the server. Free API availability does not imply free live scores: check the provider's current documentation, quotas and terms before choosing. Keep provider keys in `server/.env`; never embed private keys in Flutter. Normalize provider records into the agreed game model, add actual kickoff timestamps and close picks at kickoff on the server. Preserve stable IDs and separate real games from demo fixtures. A tie/cancellation should refund the stake under an agreed server rule. Never route real games through demo advancement.
+Real schedules/scores are connected when BALLDONTLIE_API_KEY is configured. Start with the BALLDONTLIE free NFL Games endpoint; see NFL_DATA.md for current provider research and ownership. TheSportsDB live scores require a paid tier. Free API availability does not imply free live scores: check the provider's current documentation, quotas and terms before choosing. Keep provider keys in `server/.env`; never embed private keys in Flutter. Normalize provider records into the agreed game model, add actual kickoff timestamps and close picks at kickoff on the server. Preserve stable IDs and separate real games from demo fixtures. A tie/cancellation should refund the stake under an agreed server rule. Never route real games through demo advancement.
 
 Provider documentation: https://www.thesportsdb.com/documentation
+
+## NFL integration fields
+
+GET `/api/state` can return mode `mixed` and an `nfl` object: `{configured, source, fetchedAt, stale, error, refreshSeconds}`. `games` contains the demo fixtures and real games. Real games use IDs `bdl-<id>`, `source: "balldontlie"`, an ISO `kickoff`, nullable integer scores and lifecycle statuses scheduled/live/final/postponed/canceled/delayed/suspended/abandoned/unknown. Fixtures without a source field are simulations. Use source to separate them; never infer source from team names.
+
+Real picks use the existing POST `/api/picks`. The server refreshes the shared cache before validation, requires a fresh result and a future kickoff, and settles final games/refunds in the same in-memory account. Pick status can also be `refunded`, with payout equal to the original stake. Real games are rejected by the demo advance route. Refreshes return cached data during provider failures with `nfl.stale=true` and a readable sanitized error. No fake scores are substituted.

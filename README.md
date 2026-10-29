@@ -6,7 +6,7 @@ Flutter phone app for virtual NFL picks and collectible rewards. Five-person stu
 
 Games → select a team and stake → submit to the Node server → start/finish a simulated game → view result → view earned team collectible. My picks shows pending and settled picks. Server validates stakes, duplicate picks, balance, and a 500-coin daily stake limit. A win returns 2× the stake including the original stake; this is a demo rule, not real betting odds. The home team wins each fixture so the video is repeatable.
 
-**All games, scores, and payouts are explicitly simulated.** Real NFL data, player cards, persistent storage, and deployment are team tasks, not finished features. One shared in-memory demo account starts with 1,000 coins. All connected clients share it, and restarting the server resets it. Daily stake usage resets at midnight UTC. Do not expose the demo server publicly.
+**NFL schedule** shows real schedules/scores from BALLDONTLIE when a server API key is configured. **Demo games** is the separate, explicitly labeled simulation. All stakes and payouts remain virtual; no sportsbook odds are fetched. Player cards, persistent storage, and deployment remain team tasks. One shared in-memory demo account starts with 1,000 coins. All connected clients share it, and restarting the server resets it. Daily stake usage resets at midnight UTC. Do not expose the demo server publicly.
 
 ## Requirements
 
@@ -80,4 +80,25 @@ GitHub Actions runs server tests, Flutter analysis/tests, and builds an Android 
 
 ## Team workflow
 
-Each teammate clones the repository, follows the startup steps, then works in a feature branch such as `codex/games-picks`. Coordinate changes to shared models/API before implementation. Keep pull requests small and merge only after checks pass. No commits or pushes were made by the assistant during this setup; review changes and commit them yourself.
+Each teammate clones the repository, follows the startup steps, then works in a feature branch such as `games-picks`. Coordinate changes to shared models/API before implementation. Keep pull requests small and merge only after checks pass. Review and commit your own changes before publishing your branch.
+
+## Team shortcuts
+
+Run from the repository root (no root npm dependencies are needed):
+
+```sh
+npm run setup   # Flutter packages + server dependencies
+npm run server  # Start local Node server
+npm run check   # Flutter analysis/tests + server tests
+npm run devices # List Flutter devices
+```
+
+Branch ownership and teammate onboarding: [docs/BRANCHES.md](docs/BRANCHES.md). Free NFL API research and handoff: [docs/NFL_DATA.md](docs/NFL_DATA.md).
+
+## Real NFL schedules and scores
+
+Copy `server/.env.example` to `server/.env`, then set `BALLDONTLIE_API_KEY` only in the ignored `.env` file. Leave `.env.example` blank for teammates. Restart the server after changing the key. Verify access with `npm --prefix server run check:nfl`; this reports only connection status and game count, never the key.
+
+The server queries one rolling date window (three days back through seven days ahead), caches it for 60 seconds, coalesces simultaneous refreshes and backs off on rate limits. The app refreshes once per minute while foregrounded and offers manual refresh. Source/fetch time and errors are shown; the fetch time does not guarantee the provider's own data freshness. No play-by-play feed is included.
+
+Picks on real games close at kickoff and require fresh provider data. Final results settle pending picks once; ties/canceled/abandoned games return the stake. Settlement happens when state is refreshed, not through a background job. Postponed/delayed/suspended/unknown games accept no new picks and await a definitive result. Keep the server running for the demo: accounts, picks and settlement are still in memory and reset on restart. Real games cannot use the simulation advance route.
