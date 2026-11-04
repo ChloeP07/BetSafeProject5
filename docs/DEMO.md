@@ -19,4 +19,4 @@ Use a simple screen recording with your own voice explaining the app. The assign
 
 ## Team participation
 
-Member 5 coordinates recording/editing. Every member supplies a short explanation of their contribution; use one narrator unless the rubric requires everyone to speak. Confirm submission ownership so only the intended person uploads.
+Choose the presenter from any development role based on microphone quality and presentation confidence; agree separately who records/edits. Every member supplies a short explanation of their contribution; use one narrator unless the rubric requires everyone to speak. Confirm submission ownership so only the intended person uploads.
