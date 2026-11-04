@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:betsafeproject5/main.dart';
+import 'package:betsafeproject5/models/demo_state.dart';
+import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -150,4 +152,30 @@ void main() {
     expect(find.text('NFL matchups'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets(
+    'real games do not claim a simulated quarter or simulated scores',
+    (tester) async {
+      final game = Game.fromJson({
+        'id': 'bdl-1',
+        'source': 'balldontlie',
+        'home': 'Buffalo Bills',
+        'away': 'Kansas City Chiefs',
+        'status': 'live',
+        'label': 'NFL · live',
+        'homeScore': null,
+        'awayScore': 7,
+        'kickoff': '2030-10-03T20:00:00Z',
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: MatchTicket(game: game)),
+        ),
+      );
+      expect(find.text('In progress'), findsOneWidget);
+      expect(find.text('Live score'), findsOneWidget);
+      expect(find.text('4th quarter'), findsNothing);
+      expect(find.text('Simulation · live'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

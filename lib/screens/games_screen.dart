@@ -7,12 +7,37 @@ import '../widgets/sports_ui.dart';
 import 'pick_screen.dart';
 import 'game_screen.dart';
 
-class GamesScreen extends StatelessWidget {
+class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key, required this.api});
   final BetSafeApi api;
   @override
+  State<GamesScreen> createState() => _GamesScreenState();
+}
+
+class _GamesScreenState extends State<GamesScreen> {
+  bool? simulation;
+  @override
   Widget build(BuildContext context) {
+    final api = widget.api;
     final state = api.state!;
+    final isDemo = simulation ?? !state.nfl.configured;
+    final games = state.games
+        .where((game) => game.isSimulation == isDemo)
+        .toList();
+    int rank(String status) => switch (status) {
+      'live' => 0,
+      'scheduled' => 1,
+      'final' => 3,
+      _ => 2,
+    };
+    games.sort((a, b) {
+      final byStatus = rank(a.status).compareTo(rank(b.status));
+      return byStatus != 0
+          ? byStatus
+          : (a.kickoff ?? DateTime(2000)).compareTo(
+              b.kickoff ?? DateTime(2000),
+            );
+    });
     final text = Theme.of(context).textTheme;
     return PageBody(
       children: [
@@ -131,26 +156,56 @@ class GamesScreen extends StatelessWidget {
                 style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
-            Text('${state.games.length} games', style: text.bodySmall),
+            Text('${games.length} games', style: text.bodySmall),
           ],
         ),
 
         const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('NFL schedule'),
+              selected: !isDemo,
+              onSelected: (_) => setState(() => simulation = false),
+            ),
+            ChoiceChip(
+              label: const Text('Demo games'),
+              selected: isDemo,
+              onSelected: (_) => setState(() => simulation = true),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Text(
-          'Simulation · sample games, scores and payouts.',
+          isDemo
+              ? 'Simulation · sample games, scores and payouts.'
+              : state.nfl.description,
           style: text.bodySmall,
         ),
+        if (!isDemo && games.isEmpty)
+          const EmptyMessage(
+            title: 'No NFL games available',
+            message: 'Try refreshing the schedule, or choose Demo games to try the full pick flow.',
+            icon: Icons.sports_football_outlined,
+          ),
         const SizedBox(height: 16),
-        for (final (index, game) in state.games.indexed) ...[
+        for (final (index, game) in games.indexed) ...[
           MatchTicket(
             game: game,
             color: index.isEven ? Colors.white : BetSafeColors.mint,
             footer: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  '2× demo return · virtual coins only',
-                  style: TextStyle(fontSize: 12, color: BetSafeColors.muted),
+                Text(
+                  game.isSimulation
+                      ? '2× demo return · virtual coins only'
+                      : '2× virtual-coin return · no real-money odds',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: BetSafeColors.muted,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 FilledButton(
@@ -159,8 +214,7 @@ class GamesScreen extends StatelessWidget {
                       : () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) =>
-                                state.pickFor(game.id) == null &&
-                                    game.status == 'scheduled'
+                                state.pickFor(game.id) == null && game.canPick
                                 ? PickScreen(api: api, gameId: game.id)
                                 : GameScreen(api: api, gameId: game.id),
                           ),
@@ -170,7 +224,7 @@ class GamesScreen extends StatelessWidget {
                     foregroundColor: BetSafeColors.cream,
                   ),
                   child: Text(
-                    state.pickFor(game.id) == null && game.status == 'scheduled'
+                    state.pickFor(game.id) == null && game.canPick
                         ? 'Make a pick'
                         : 'View game',
                   ),

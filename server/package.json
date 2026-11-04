@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node --env-file-if-exists=.env src/index.js",
     "dev": "node --watch --env-file-if-exists=.env src/index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "check:nfl": "node --env-file-if-exists=.env scripts/check-nfl.mjs"
   },
-  "dependencies": { "express": "^5.1.0" }
+  "dependencies": {
+    "express": "^5.1.0"
+  }
 }

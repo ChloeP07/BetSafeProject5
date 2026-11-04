@@ -1,13 +1,20 @@
 import express from 'express';
-import { createStore, snapshot, placePick, advanceDemo } from './store.js';
+import { createStore, snapshot, placePick, advanceDemo, syncNfl } from './store.js';
 
-export function createApp({ store = createStore(), demoEnabled = true } = {}) {
+export function createApp({ store = createStore(), demoEnabled = true, nflFeed = null } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '16kb' }));
   app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'betsafe', mode: 'simulation' }));
-  app.get('/api/state', (_req, res) => res.json(snapshot(store)));
-  app.post('/api/picks', (req, res) => {
+  async function refreshNfl() {
+    if (nflFeed) syncNfl(store, await nflFeed.get());
+  }
+  app.get('/api/state', async (_req, res) => {
+    await refreshNfl();
+    res.json(snapshot(store));
+  });
+  app.post('/api/picks', async (req, res) => {
+    if (typeof req.body?.gameId === 'string' && req.body.gameId.startsWith('bdl-')) await refreshNfl();
     placePick(store, req.body);
     res.status(201).json(snapshot(store));
   });

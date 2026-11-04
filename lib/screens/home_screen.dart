@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/betsafe_api.dart';
@@ -14,18 +16,40 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late final BetSafeApi api;
   int destination = 0;
+  Timer? refreshTimer;
+  void startRefreshTimer() {
+    refreshTimer?.cancel();
+    refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (api.state?.nfl.configured ?? false) api.refresh();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      api.refresh();
+      startRefreshTimer();
+    } else {
+      refreshTimer?.cancel();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     api = widget.api ?? BetSafeApi();
     api.refresh();
+    WidgetsBinding.instance.addObserver(this);
+    startRefreshTimer();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    refreshTimer?.cancel();
     if (widget.api == null) api.dispose();
     super.dispose();
   }

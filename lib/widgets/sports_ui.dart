@@ -122,10 +122,10 @@ class MatchTicket extends StatelessWidget {
               const Spacer(),
               StatusPill(
                 scheduled
-                    ? 'Demo matchup'
+                    ? (game.isSimulation ? 'Demo matchup' : 'Scheduled')
                     : game.status == 'live'
-                    ? 'Simulation · live'
-                    : 'Simulation · final',
+                    ? (game.isSimulation ? 'Simulation · live' : 'In progress')
+                    : (game.isSimulation ? 'Simulation · final' : game.status),
               ),
             ],
           ),
@@ -141,7 +141,7 @@ class MatchTicket extends StatelessWidget {
                     Text(
                       scheduled
                           ? 'VS'
-                          : '${game.awayScore} : ${game.homeScore}',
+                          : '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}',
                       style: text.headlineSmall?.copyWith(
                         color: BetSafeColors.ink,
                         fontWeight: FontWeight.w900,
@@ -152,8 +152,10 @@ class MatchTicket extends StatelessWidget {
                       scheduled
                           ? 'Away / Home'
                           : game.status == 'live'
-                          ? '4th quarter'
-                          : 'Final score',
+                          ? (game.isSimulation ? '4th quarter' : 'Live score')
+                          : game.status == 'final'
+                          ? 'Final score'
+                          : 'Score',
                       style: const TextStyle(
                         color: BetSafeColors.muted,
                         fontSize: 11,
@@ -165,6 +167,13 @@ class MatchTicket extends StatelessWidget {
               Expanded(child: _TeamColumn(team: game.home)),
             ],
           ),
+          if (!game.isSimulation) ...[
+            const SizedBox(height: 16),
+            Text(
+              game.kickoffLabel,
+              style: const TextStyle(fontSize: 12, color: BetSafeColors.muted),
+            ),
+          ],
           if (footer != null) ...[
             const SizedBox(height: 20),
             const Divider(height: 1, color: Color(0x22302419)),

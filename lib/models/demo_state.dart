@@ -7,6 +7,8 @@ class Game {
     required this.label,
     required this.homeScore,
     required this.awayScore,
+    this.source = 'simulation',
+    this.kickoff,
   });
   factory Game.fromJson(Map<String, dynamic> json) => Game(
     id: json['id'] as String,
@@ -14,11 +16,24 @@ class Game {
     away: json['away'] as String,
     status: json['status'] as String,
     label: json['label'] as String,
-    homeScore: json['homeScore'] as int,
-    awayScore: json['awayScore'] as int,
+    homeScore: json['homeScore'] as int?,
+    awayScore: json['awayScore'] as int?,
+    source: json['source'] as String? ?? 'simulation',
+    kickoff: DateTime.tryParse(json['kickoff'] as String? ?? ''),
   );
   final String id, home, away, status, label;
-  final int homeScore, awayScore;
+  final int? homeScore, awayScore;
+  final String source;
+  final DateTime? kickoff;
+  bool get isSimulation => source != 'balldontlie';
+  bool get canPick =>
+      status == 'scheduled' &&
+      (isSimulation || (kickoff?.isAfter(DateTime.now()) ?? false));
+  String get kickoffLabel {
+    if (kickoff == null) return label;
+    final local = kickoff!.toLocal();
+    return '${local.month}/${local.day} · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')} local';
+  }
 }
 
 class Pick {
@@ -56,7 +71,8 @@ class Collectible {
 
 class DemoState {
   DemoState.fromJson(Map<String, dynamic> json)
-    : coins = json['account']['coins'] as int,
+    : nfl = NflStatus.fromJson(json['nfl'] as Map<String, dynamic>? ?? {}),
+      coins = json['account']['coins'] as int,
       dailyRemaining =
           (json['account']['dailyLimit'] as int) -
           (json['account']['dailyStaked'] as int),
@@ -69,6 +85,7 @@ class DemoState {
       collection = (json['collection'] as List)
           .map((item) => Collectible.fromJson(item as Map<String, dynamic>))
           .toList();
+  final NflStatus nfl;
   final int coins, dailyRemaining;
   final List<Game> games;
   final List<Pick> picks;
@@ -78,5 +95,25 @@ class DemoState {
       if (pick.gameId == gameId) return pick;
     }
     return null;
+  }
+}
+
+class NflStatus {
+  NflStatus.fromJson(Map<String, dynamic> json)
+    : configured = json['configured'] as bool? ?? false,
+      stale = json['stale'] as bool? ?? false,
+      fetchedAt = DateTime.tryParse(json['fetchedAt'] as String? ?? ''),
+      error = json['error'] as String?;
+  final bool configured, stale;
+  final DateTime? fetchedAt;
+  final String? error;
+  String get description {
+    if (!configured) {
+      return 'NFL data is not configured. Add the API key to the server’s .env file.';
+    }
+    if (error != null) return error!;
+    if (fetchedAt == null) return 'NFL schedule has not been fetched yet.';
+    final time = fetchedAt!.toLocal();
+    return 'BALLDONTLIE · fetched ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} local${stale ? ' · may be out of date' : ' · refreshes every minute'}';
   }
 }
