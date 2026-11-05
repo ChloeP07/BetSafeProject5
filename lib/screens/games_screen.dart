@@ -33,7 +33,7 @@ class _GamesScreenState extends State<GamesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Hey, Demo player',
+                    'Hey, ${state.playerName}',
                     style: text.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -86,7 +86,7 @@ class _GamesScreenState extends State<GamesScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${state.dailyRemaining} of 500 coins left to stake today',
+                      '${state.dailyRemaining} of ${state.dailyLimit} coins left to stake today',
                       style: const TextStyle(
                         fontSize: 12,
                         color: BetSafeColors.muted,
