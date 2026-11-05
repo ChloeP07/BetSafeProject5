@@ -21,9 +21,11 @@ class _PickScreenState extends State<PickScreen> {
   String? team;
   int stake = 100;
 
+  /// Selects a team. A second tap on the chosen team clears the choice.
   void _choose(String option) {
-    HapticFeedback.selectionClick();
-    setState(() => team = option);
+    final selecting = team != option;
+    if (selecting) HapticFeedback.selectionClick();
+    setState(() => team = selecting ? option : null);
   }
 
   @override
