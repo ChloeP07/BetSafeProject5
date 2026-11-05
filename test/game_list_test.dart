@@ -1,3 +1,4 @@
+import 'package:betsafeproject5/models/demo_state.dart';
 import 'package:betsafeproject5/models/game_list.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -71,6 +72,42 @@ void main() {
     expect(all.where(GameFilter.open.matches), [open]);
     expect(all.where(GameFilter.live.matches), [live]);
     expect(all.where(GameFilter.finished.matches), [done, off]);
+  });
+
+  group('gameActionLabel', () {
+    final soon = DateTime.now().add(const Duration(hours: 3));
+    final open = gameFrom(nflGameJson(kickoff: soon));
+    Pick pick(String status) =>
+        demoState(stateJson(picks: [pickJson(status: status)])).picks.single;
+
+    test('an open game with no pick invites one', () {
+      expect(gameActionLabel(open, null), 'Make a pick');
+    });
+
+    test('a pending pick can be viewed', () {
+      expect(gameActionLabel(open, pick('pending')), 'View your pick');
+    });
+
+    test('a settled pick shows its result', () {
+      for (final status in ['won', 'lost', 'refunded']) {
+        expect(gameActionLabel(open, pick(status)), 'View result');
+      }
+    });
+
+    test('a game with no pick follows its status', () {
+      expect(
+        gameActionLabel(gameFrom(nflGameJson(status: 'final')), null),
+        'View result',
+      );
+      expect(
+        gameActionLabel(gameFrom(nflGameJson(status: 'live')), null),
+        'View game',
+      );
+      expect(
+        gameActionLabel(gameFrom(nflGameJson(status: 'postponed')), null),
+        'View game',
+      );
+    });
   });
 
   group('matchesTeamSearch', () {
