@@ -179,6 +179,8 @@ class MatchTicket extends StatelessWidget {
                                   ? (game.isSimulation
                                         ? '4th quarter'
                                         : 'Live score')
+                                  : game.isTied
+                                  ? 'Tied'
                                   : game.status == 'final'
                                   ? 'Final score'
                                   : 'Score',
