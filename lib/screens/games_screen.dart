@@ -18,11 +18,19 @@ class GamesScreen extends StatefulWidget {
 class _GamesScreenState extends State<GamesScreen> {
   bool? simulation;
   GameFilter filter = GameFilter.all;
+  final search = TextEditingController();
 
   void _chooseSource(bool demo) => setState(() {
     simulation = demo;
     filter = GameFilter.all;
+    search.clear();
   });
+
+  @override
+  void dispose() {
+    search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +38,10 @@ class _GamesScreenState extends State<GamesScreen> {
     final state = api.state!;
     final isDemo = simulation ?? !state.nfl.configured;
     final sourceGames = gamesForSource(state.games, simulation: isDemo);
-    final games = sourceGames.where(filter.matches).toList();
+    final searched = sourceGames
+        .where((game) => matchesTeamSearch(game, search.text))
+        .toList();
+    final games = searched.where(filter.matches).toList();
     final text = Theme.of(context).textTheme;
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return PageBody(
@@ -179,6 +190,26 @@ class _GamesScreenState extends State<GamesScreen> {
           style: text.bodySmall,
         ),
         if (sourceGames.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          TextField(
+            controller: search,
+            onChanged: (_) => setState(() {}),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              labelText: 'Search teams',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: search.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(search.clear),
+                    ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -187,7 +218,7 @@ class _GamesScreenState extends State<GamesScreen> {
               for (final option in GameFilter.values)
                 ChoiceChip(
                   label: Text(
-                    '${option.label} · ${sourceGames.where(option.matches).length}',
+                    '${option.label} · ${searched.where(option.matches).length}',
                   ),
                   selected: filter == option,
                   selectedColor: BetSafeColors.mint,
