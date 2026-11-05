@@ -26,6 +26,8 @@ List<Game> gamesForSource(Iterable<Game> games, {required bool simulation}) =>
     games.where((game) => game.isSimulation == simulation).toList()
       ..sort(compareGames);
 
+String gameCountLabel(int count) => count == 1 ? '1 game' : '$count games';
+
 /// The status filter chips above the list.
 enum GameFilter {
   all('All'),
