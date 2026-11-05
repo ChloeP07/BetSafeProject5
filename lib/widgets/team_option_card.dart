@@ -18,6 +18,12 @@ class TeamOptionCard extends StatelessWidget {
   final String side;
   final bool selected;
   final VoidCallback? onTap;
+
+  Duration _motion(BuildContext context) =>
+      MediaQuery.disableAnimationsOf(context)
+      ? Duration.zero
+      : const Duration(milliseconds: 180);
+
   @override
   Widget build(BuildContext context) => Semantics(
     // Reads like a radio button: the team, then selected or not selected.
@@ -31,6 +37,7 @@ class TeamOptionCard extends StatelessWidget {
     child: OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
+        animationDuration: _motion(context),
         backgroundColor: selected ? BetSafeColors.mint : null,
         foregroundColor: selected ? BetSafeColors.green : null,
         side: BorderSide(
@@ -61,9 +68,15 @@ class TeamOptionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
-            selected ? Icons.check_circle : Icons.radio_button_off,
-            size: 22,
+          AnimatedSwitcher(
+            duration: _motion(context),
+            transitionBuilder: (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+            child: Icon(
+              selected ? Icons.check_circle : Icons.radio_button_off,
+              key: ValueKey(selected),
+              size: 22,
+            ),
           ),
         ],
       ),
