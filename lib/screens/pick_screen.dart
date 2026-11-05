@@ -4,6 +4,7 @@ import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
+import '../widgets/team_option_card.dart';
 import 'game_screen.dart';
 
 class PickScreen extends StatefulWidget {
@@ -45,43 +46,12 @@ class _PickScreenState extends State<PickScreen> {
               for (final option in [game.away, game.home])
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: OutlinedButton(
-                    onPressed: api.busy
+                  child: TeamOptionCard(
+                    team: option,
+                    selected: team == option,
+                    onTap: api.busy
                         ? null
                         : () => setState(() => team = option),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: team == option
-                          ? BetSafeColors.mint
-                          : null,
-                      foregroundColor: team == option
-                          ? BetSafeColors.green
-                          : null,
-                      side: BorderSide(
-                        color: team == option
-                            ? BetSafeColors.green
-                            : Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      padding: const EdgeInsets.all(14),
-                    ),
-                    child: Row(
-                      children: [
-                        TeamBadge(team: option, size: 38),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            option,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          team == option
-                              ? Icons.check_circle
-                              : Icons.radio_button_off,
-                          size: 22,
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               const SizedBox(height: 16),
