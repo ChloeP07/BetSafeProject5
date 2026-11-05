@@ -155,6 +155,7 @@ class MatchTicket extends StatelessWidget {
                       Expanded(
                         child: _TeamColumn(
                           team: game.away,
+                          side: 'Away',
                           won: game.winner == game.away,
                         ),
                       ),
@@ -171,30 +172,31 @@ class MatchTicket extends StatelessWidget {
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              scheduled
-                                  ? 'Away / Home'
-                                  : game.status == 'live'
-                                  ? (game.isSimulation
-                                        ? '4th quarter'
-                                        : 'Live score')
-                                  : game.isTied
-                                  ? 'Tied'
-                                  : game.status == 'final'
-                                  ? 'Final score'
-                                  : 'Score',
-                              style: const TextStyle(
-                                color: BetSafeColors.muted,
-                                fontSize: 11,
+                            if (!scheduled) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                game.status == 'live'
+                                    ? (game.isSimulation
+                                          ? '4th quarter'
+                                          : 'Live score')
+                                    : game.isTied
+                                    ? 'Tied'
+                                    : game.status == 'final'
+                                    ? 'Final score'
+                                    : 'Score',
+                                style: const TextStyle(
+                                  color: BetSafeColors.muted,
+                                  fontSize: 11,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
                       Expanded(
                         child: _TeamColumn(
                           team: game.home,
+                          side: 'Home',
                           won: game.winner == game.home,
                         ),
                       ),
@@ -238,8 +240,8 @@ class MatchTicket extends StatelessWidget {
 }
 
 class _TeamColumn extends StatelessWidget {
-  const _TeamColumn({required this.team, this.won = false});
-  final String team;
+  const _TeamColumn({required this.team, required this.side, this.won = false});
+  final String team, side;
   final bool won;
   @override
   Widget build(BuildContext context) => Column(
@@ -255,6 +257,11 @@ class _TeamColumn extends StatelessWidget {
           height: 1.25,
           color: won ? BetSafeColors.green : null,
         ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        side,
+        style: const TextStyle(fontSize: 11, color: BetSafeColors.muted),
       ),
       if (won) ...[
         const SizedBox(height: 4),
