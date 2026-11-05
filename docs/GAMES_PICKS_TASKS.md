@@ -36,7 +36,7 @@ Rules for every task:
 
 ## Day 2: matchup cards and team selection
 
-- [ ] GP-21 Highlight the winning team on final cards, only when both scores are known
+- [x] GP-21 Highlight the winning team on final cards, only when both scores are known
 - [ ] GP-22 Show "Tied" on tied final cards, with no winner highlighted
 - [ ] GP-23 Tag each team Away or Home on the card, replacing the shared "Away / Home" caption
 - [ ] GP-24 Make the whole game card tappable, going to the same place as its button
