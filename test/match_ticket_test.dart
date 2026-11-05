@@ -13,6 +13,37 @@ Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
     );
 
 void main() {
+  group('tied game', () {
+    final tied = nflGameJson(status: 'final', awayScore: 20, homeScore: 20);
+
+    testWidgets('says Tied and highlights nobody', (tester) async {
+      await pumpTicket(tester, tied);
+      expect(find.text('Tied'), findsOneWidget);
+      expect(find.text('Final score'), findsNothing);
+      expect(find.text('Winner'), findsNothing);
+    });
+
+    test('is read out for screen readers', () {
+      expect(gameFrom(tied).matchupDescription, contains('Tied.'));
+      expect(gameFrom(tied).winner, isNull);
+    });
+
+    test('a live game with level scores is not tied', () {
+      expect(
+        gameFrom(nflGameJson(status: 'live', awayScore: 7, homeScore: 7))
+            .isTied,
+        isFalse,
+      );
+    });
+
+    testWidgets('a final with a missing score is not called tied', (
+      tester,
+    ) async {
+      await pumpTicket(tester, nflGameJson(status: 'final'));
+      expect(find.text('Tied'), findsNothing);
+    });
+  });
+
   group('winner', () {
     testWidgets('marks the winning team on a final card', (tester) async {
       await pumpTicket(
