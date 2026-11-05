@@ -22,11 +22,13 @@ class _GamesScreenState extends State<GamesScreen> {
   bool? simulation;
   GameFilter filter = GameFilter.all;
   final search = TextEditingController();
+  bool showFinished = false;
 
   void _chooseSource(bool demo) => setState(() {
     simulation = demo;
     filter = GameFilter.all;
     search.clear();
+    showFinished = false;
   });
 
   void _clearFilters() => setState(() {
@@ -63,6 +65,13 @@ class _GamesScreenState extends State<GamesScreen> {
         .where((game) => matchesTeamSearch(game, search.text))
         .toList();
     final games = searched.where(filter.matches).toList();
+    final sections = groupGames(games);
+    // Finished games fold away only when other games are on screen. A search or
+    // the Final filter is asking for them, so those keep them open.
+    final canCollapse =
+        sections.length > 1 &&
+        filter != GameFilter.finished &&
+        search.text.trim().isEmpty;
     final summary = gameSummary(sourceGames, state.picks);
     final text = Theme.of(context).textTheme;
     final onSurface = Theme.of(context).colorScheme.onSurface;
@@ -294,57 +303,78 @@ class _GamesScreenState extends State<GamesScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          for (final section in groupGames(games)) ...[
-            Semantics(
-              header: true,
-              child: Text(
-                section.title,
-                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              ),
+          for (final section in sections) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      section.title,
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+                if (canCollapse && section.tone == GameTone.finished)
+                  TextButton(
+                    onPressed: () =>
+                        setState(() => showFinished = !showFinished),
+                    child: Text(
+                      showFinished
+                          ? 'Hide'
+                          : 'Show ${gameCountLabel(section.games.length)}',
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
-            for (final game in section.games) ...[
-              MatchTicket(
-                game: game,
-                onTap: () => _openGame(game),
-                footer: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (state.pickFor(game.id) case final pick?) ...[
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: StatusPill(
-                          'Your pick: ${teamShortName(pick.team)} · ${pick.stake} coins',
+            if (!canCollapse ||
+                showFinished ||
+                section.tone != GameTone.finished)
+              for (final game in section.games) ...[
+                MatchTicket(
+                  game: game,
+                  onTap: () => _openGame(game),
+                  footer: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (state.pickFor(game.id) case final pick?) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: StatusPill(
+                            'Your pick: ${teamShortName(pick.team)} · ${pick.stake} coins',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      Text(
+                        game.closedReason ??
+                            (game.isSimulation
+                                ? '2× demo return · virtual coins only'
+                                : '2× virtual-coin return · no real-money odds'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: BetSafeColors.muted,
                         ),
                       ),
                       const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: api.busy ? null : () => _openGame(game),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: BetSafeColors.darkBrown,
+                          foregroundColor: BetSafeColors.cream,
+                        ),
+                        child: Text(
+                          gameActionLabel(game, state.pickFor(game.id)),
+                        ),
+                      ),
                     ],
-                    Text(
-                      game.closedReason ??
-                          (game.isSimulation
-                              ? '2× demo return · virtual coins only'
-                              : '2× virtual-coin return · no real-money odds'),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: BetSafeColors.muted,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: api.busy ? null : () => _openGame(game),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: BetSafeColors.darkBrown,
-                        foregroundColor: BetSafeColors.cream,
-                      ),
-                      child: Text(
-                        gameActionLabel(game, state.pickFor(game.id)),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
             const SizedBox(height: 8),
           ],
           Text(
