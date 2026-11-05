@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
@@ -61,6 +62,18 @@ class _PickScreenState extends State<PickScreen> {
                     side: side,
                     selected: team == option,
                     onTap: api.busy ? null : () => _choose(option),
+                  ),
+                ),
+              if (team case final chosen?)
+                Semantics(
+                  container: true,
+                  liveRegion: true,
+                  child: Text(
+                    'You’re backing the ${teamShortName(chosen)}',
+                    style: text.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               const SizedBox(height: 16),
