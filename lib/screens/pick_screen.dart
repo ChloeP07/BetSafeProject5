@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,6 +22,23 @@ class PickScreen extends StatefulWidget {
 class _PickScreenState extends State<PickScreen> {
   String? team;
   int stake = 100;
+
+  /// Keeps the kickoff countdown current between server refreshes.
+  late final Timer _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+    if (mounted) setState(() {});
+  });
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker;
+  }
+
+  @override
+  void dispose() {
+    _ticker.cancel();
+    super.dispose();
+  }
 
   /// Selects a team. A second tap on the chosen team clears the choice.
   void _choose(String option) {
@@ -57,6 +76,25 @@ class _PickScreenState extends State<PickScreen> {
               ),
               const SizedBox(height: 8),
               const Text('Choose your team. Keep it virtual.'),
+              if (!game.isSimulation) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Picks close at kickoff.',
+                        style: text.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               for (final (option, side) in [
                 (game.away, 'Away team'),
