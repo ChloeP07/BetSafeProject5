@@ -15,7 +15,7 @@ Rules for every task:
 
 - [x] GP-01 Move game ordering and the NFL/demo split into a tested helper, with a stable order for games that have no kickoff time
 - [x] GP-02 Read the player name and daily limit from the server instead of hard-coding "Demo player" and 500
-- [ ] GP-03 Add a directory of all 32 NFL teams with abbreviations and short names
+- [x] GP-03 Add a directory of all 32 NFL teams with abbreviations and short names
 - [ ] GP-04 Use the directory for team badges, and stop badges crashing on an empty team name
 - [ ] GP-05 Give every game status readable text, including postponed, canceled, delayed, suspended, abandoned and unknown
 - [ ] GP-06 Color status pills by meaning: open, live, waiting or finished
