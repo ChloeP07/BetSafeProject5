@@ -140,5 +140,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(MatchTicket), findsNWidgets(3));
     });
+
+    testWidgets('no matches offers a way back to every game', (tester) async {
+      await pumpApp(tester, threeGames());
+      await tester.enterText(find.byType(TextField), 'nobody');
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsNothing);
+      expect(find.text('No games match'), findsOneWidget);
+      await tester.tap(find.text('Clear filters'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsNWidgets(3));
+      expect(find.text('No games match'), findsNothing);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+    });
+
+    testWidgets('a filter with no games also offers Clear filters', (
+      tester,
+    ) async {
+      await pumpApp(tester, threeGames());
+      await tester.tap(find.text('Live · 0'));
+      await tester.pumpAndSettle();
+      expect(find.text('No games match'), findsOneWidget);
+      expect(find.text('Clear filters'), findsOneWidget);
+    });
   });
 }

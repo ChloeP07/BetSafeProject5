@@ -25,7 +25,7 @@ Rules for every task:
 - [x] GP-10 Group the list under Live now, Open for picks, Waiting for an update and Finished
 - [x] GP-11 Add All, Open, Live and Final filter chips with counts
 - [x] GP-12 Add team search that matches names and abbreviations
-- [ ] GP-13 Add a "no matches" state with a Clear filters action
+- [x] GP-13 Add a "no matches" state with a Clear filters action
 - [ ] GP-14 Show game counts on the NFL/demo chips, add a demo empty state and fix "1 games"
 - [ ] GP-15 Add pull to refresh on the Games list
 - [ ] GP-16 Show a banner with Try again when NFL data is stale or failed to load
