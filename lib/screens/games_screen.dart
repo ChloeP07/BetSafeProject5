@@ -176,49 +176,59 @@ class _GamesScreenState extends State<GamesScreen> {
             icon: Icons.sports_football_outlined,
           ),
         const SizedBox(height: 16),
-        for (final game in games) ...[
-          MatchTicket(
-            game: game,
-            footer: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  game.isSimulation
-                      ? '2× demo return · virtual coins only'
-                      : '2× virtual-coin return · no real-money odds',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: BetSafeColors.muted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: api.busy
-                      ? null
-                      : () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                state.pickFor(game.id) == null && game.canPick
-                                ? PickScreen(api: api, gameId: game.id)
-                                : GameScreen(api: api, gameId: game.id),
-                          ),
-                        ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: BetSafeColors.darkBrown,
-                    foregroundColor: BetSafeColors.cream,
-                  ),
-                  child: Text(
-                    state.pickFor(game.id) == null && game.canPick
-                        ? 'Make a pick'
-                        : 'View game',
-                  ),
-                ),
-              ],
+        for (final section in groupGames(games)) ...[
+          Semantics(
+            header: true,
+            child: Text(
+              section.title,
+              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          for (final game in section.games) ...[
+            MatchTicket(
+              game: game,
+              footer: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    game.isSimulation
+                        ? '2× demo return · virtual coins only'
+                        : '2× virtual-coin return · no real-money odds',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: BetSafeColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: api.busy
+                        ? null
+                        : () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  state.pickFor(game.id) == null && game.canPick
+                                  ? PickScreen(api: api, gameId: game.id)
+                                  : GameScreen(api: api, gameId: game.id),
+                            ),
+                          ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: BetSafeColors.darkBrown,
+                      foregroundColor: BetSafeColors.cream,
+                    ),
+                    child: Text(
+                      state.pickFor(game.id) == null && game.canPick
+                          ? 'Make a pick'
+                          : 'View game',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          const SizedBox(height: 8),
         ],
-        const SizedBox(height: 8),
         Text(
           'No deposits. No cash-outs. Collectibles have no cash value.',
           style: text.bodySmall,
