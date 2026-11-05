@@ -45,7 +45,7 @@ Rules for every task:
 - [x] GP-27 Collapse the Finished section by default, with a show/hide control
 - [x] GP-28 Show "Updated N min ago" on the NFL list
 - [x] GP-29 Extract the pick screen's team button into a tested TeamOptionCard widget
-- [ ] GP-30 Announce team options to screen readers as selected or not selected
+- [x] GP-30 Announce team options to screen readers as selected or not selected
 - [ ] GP-31 Add an Away or Home tag to each team option
 - [ ] GP-32 Animate team selection, respecting the reduced-motion setting
 - [ ] GP-33 Add a light haptic when a team is selected

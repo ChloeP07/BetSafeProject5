@@ -1,6 +1,7 @@
 import 'package:betsafeproject5/theme.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<void> pumpOption(
@@ -50,5 +51,60 @@ void main() {
       tester.widget<OutlinedButton>(find.byType(OutlinedButton)).enabled,
       isFalse,
     );
+  });
+
+  group('screen readers', () {
+    testWidgets('hear a selected option as checked', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOption(tester, selected: true, onTap: () {});
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        isSemantics(
+          label: 'Buffalo Bills',
+          hasCheckedState: true,
+          isChecked: true,
+          isInMutuallyExclusiveGroup: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('hear an unselected option as not checked', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOption(tester, onTap: () {});
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        isSemantics(hasCheckedState: true, isChecked: false),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('hear a disabled option as disabled', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpOption(tester);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        isSemantics(hasEnabledState: true, isEnabled: false),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('can select through the screen reader tap', (tester) async {
+      var taps = 0;
+      final semantics = tester.ensureSemantics();
+      await pumpOption(tester, onTap: () => taps++);
+      tester
+          .getSemantics(find.bySemanticsLabel('Buffalo Bills'))
+          .owner!
+          .performAction(
+            tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')).id,
+            SemanticsAction.tap,
+          );
+      expect(taps, 1);
+      semantics.dispose();
+    });
   });
 }
