@@ -156,6 +156,65 @@ void main() {
     });
   });
 
+  group('NFL problem banner', () {
+    Map<String, dynamic> failingFeed() => {
+      ...nflOk(),
+      'stale': true,
+      'error': 'NFL provider is unavailable. Try again shortly.',
+    };
+
+    testWidgets('shows the error and retries from the server', (tester) async {
+      var gets = 0;
+      await pumpApp(
+        tester,
+        stateJson(nfl: failingFeed(), games: [nflGameJson()]),
+        onRequest: (_) => gets++,
+      );
+      expect(
+        find.text('NFL provider is unavailable. Try again shortly.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(gets, 2);
+    });
+
+    testWidgets('keeps cached games visible, with no invented scores', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        stateJson(nfl: failingFeed(), games: [nflGameJson()]),
+      );
+      expect(find.byType(MatchTicket), findsOneWidget);
+    });
+
+    testWidgets('stays away when the feed is healthy', (tester) async {
+      await pumpApp(tester, stateJson(nfl: nflOk(), games: [nflGameJson()]));
+      expect(find.text('Try again'), findsNothing);
+    });
+
+    testWidgets('stays away on the demo list', (tester) async {
+      await pumpApp(
+        tester,
+        stateJson(nfl: failingFeed(), games: [nflGameJson(), demoGameJson()]),
+      );
+      await tester.tap(find.text('Demo games · 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Try again'), findsNothing);
+    });
+
+    testWidgets('stays away when no NFL key is configured', (tester) async {
+      await pumpApp(
+        tester,
+        stateJson(nfl: {'configured': false}, games: [demoGameJson()]),
+      );
+      await tester.tap(find.text('NFL schedule · 0'));
+      await tester.pumpAndSettle();
+      expect(find.text('Try again'), findsNothing);
+    });
+  });
+
   group('NFL and demo chips', () {
     testWidgets('show how many games each side has', (tester) async {
       await pumpApp(

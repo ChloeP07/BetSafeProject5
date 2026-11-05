@@ -28,7 +28,7 @@ Rules for every task:
 - [x] GP-13 Add a "no matches" state with a Clear filters action
 - [x] GP-14 Show game counts on the NFL/demo chips, add a demo empty state and fix "1 games"
 - [x] GP-15 Add pull to refresh on the Games list
-- [ ] GP-16 Show a banner with Try again when NFL data is stale or failed to load
+- [x] GP-16 Show a banner with Try again when NFL data is stale or failed to load
 - [ ] GP-17 Replace the first-load spinner with placeholder game cards
 - [ ] GP-18 Show "Your pick" on cards where a pick already exists
 - [ ] GP-19 Match the card button to the game: Make a pick, View your pick, View result, View game
