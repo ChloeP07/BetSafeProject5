@@ -31,4 +31,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(haptics, ['HapticFeedbackType.selectionClick']);
   });
+
+  group('backing line', () {
+    testWidgets('is hidden until a team is chosen', (tester) async {
+      await pumpPick(tester, stateJson());
+      expect(find.textContaining('backing'), findsNothing);
+    });
+
+    testWidgets('names the chosen team and follows a change', (tester) async {
+      await pumpPick(tester, stateJson());
+      await tester.tap(option('Buffalo Bills'));
+      await tester.pumpAndSettle();
+      expect(find.text('You’re backing the Bills'), findsOneWidget);
+      await tester.tap(option('Kansas City Chiefs'));
+      await tester.pumpAndSettle();
+      expect(find.text('You’re backing the Chiefs'), findsOneWidget);
+      expect(find.text('You’re backing the Bills'), findsNothing);
+    });
+  });
 }
