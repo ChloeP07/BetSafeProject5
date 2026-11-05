@@ -50,7 +50,7 @@ Rules for every task:
 - [x] GP-32 Animate team selection, respecting the reduced-motion setting
 - [x] GP-33 Add a light haptic when a team is selected
 - [x] GP-34 Add a confirmation line such as "You're backing the Bills"
-- [ ] GP-35 Let a second tap on the selected team clear the choice
+- [x] GP-35 Let a second tap on the selected team clear the choice
 - [ ] GP-36 Let a tap on a team in the pick screen's ticket select that team
 - [ ] GP-37 Show the kickoff countdown and "Picks close at kickoff" on the pick screen for NFL games
 - [ ] GP-38 If a game closes while someone is picking, disable the form and explain why

@@ -1,10 +1,15 @@
 import 'package:betsafeproject5/widgets/team_option_card.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fixtures.dart';
 
 Finder option(String team) => find.widgetWithText(TeamOptionCard, team);
+
+FilledButton lockInButton(WidgetTester tester) => tester.widget<FilledButton>(
+  find.widgetWithText(FilledButton, 'Lock in pick'),
+);
 
 /// Records haptic requests sent to the phone.
 List<String> recordHaptics(WidgetTester tester) {
@@ -30,6 +35,27 @@ void main() {
     await tester.tap(option('Buffalo Bills'));
     await tester.pumpAndSettle();
     expect(haptics, ['HapticFeedbackType.selectionClick']);
+  });
+
+  testWidgets('a second tap clears the choice and blocks Lock in', (
+    tester,
+  ) async {
+    final haptics = recordHaptics(tester);
+    await pumpPick(tester, stateJson());
+    await tester.tap(option('Buffalo Bills'));
+    await tester.pumpAndSettle();
+    expect(lockInButton(tester).onPressed, isNotNull);
+
+    await tester.tap(option('Buffalo Bills'));
+    await tester.pumpAndSettle();
+    expect(lockInButton(tester).onPressed, isNull);
+    expect(find.textContaining('backing'), findsNothing);
+    expect(
+      tester.widget<TeamOptionCard>(option('Buffalo Bills')).selected,
+      isFalse,
+    );
+    // Only selecting buzzes, not clearing.
+    expect(haptics, hasLength(1));
   });
 
   group('backing line', () {
