@@ -43,11 +43,15 @@ class _PickScreenState extends State<PickScreen> {
               const SizedBox(height: 8),
               const Text('Choose your team. Keep it virtual.'),
               const SizedBox(height: 16),
-              for (final option in [game.away, game.home])
+              for (final (option, side) in [
+                (game.away, 'Away team'),
+                (game.home, 'Home team'),
+              ])
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: TeamOptionCard(
                     team: option,
+                    side: side,
                     selected: team == option,
                     onTap: api.busy
                         ? null
