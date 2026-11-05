@@ -104,4 +104,41 @@ void main() {
       expect(find.text('All · 1'), findsOneWidget);
     });
   });
+
+  group('team search', () {
+    Map<String, dynamic> threeGames() => stateJson(
+      games: [
+        demoGameJson(id: 'demo-1'),
+        demoGameJson(
+          id: 'demo-2',
+          away: 'Dallas Cowboys',
+          home: 'Philadelphia Eagles',
+        ),
+        demoGameJson(
+          id: 'demo-3',
+          away: 'Green Bay Packers',
+          home: 'Chicago Bears',
+        ),
+      ],
+    );
+
+    testWidgets('narrows the list and updates the chip counts', (tester) async {
+      await pumpApp(tester, threeGames());
+      await tester.enterText(find.byType(TextField), 'eagles');
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsOneWidget);
+      expect(find.text('Philadelphia Eagles'), findsOneWidget);
+      expect(find.text('All · 1'), findsOneWidget);
+    });
+
+    testWidgets('the clear button brings every game back', (tester) async {
+      await pumpApp(tester, threeGames());
+      await tester.enterText(find.byType(TextField), 'gb');
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsOneWidget);
+      await tester.tap(find.byTooltip('Clear search'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsNWidgets(3));
+    });
+  });
 }

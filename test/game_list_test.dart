@@ -73,6 +73,28 @@ void main() {
     expect(all.where(GameFilter.finished.matches), [done, off]);
   });
 
+  group('matchesTeamSearch', () {
+    final game = gameFrom(
+      demoGameJson(away: 'Kansas City Chiefs', home: 'Buffalo Bills'),
+    );
+
+    test('matches either team by part of its name, in any case', () {
+      expect(matchesTeamSearch(game, 'chiefs'), isTrue);
+      expect(matchesTeamSearch(game, 'BUFF'), isTrue);
+      expect(matchesTeamSearch(game, 'kansas city'), isTrue);
+    });
+
+    test('matches abbreviations', () {
+      expect(matchesTeamSearch(game, 'kc'), isTrue);
+      expect(matchesTeamSearch(game, 'buf'), isTrue);
+    });
+
+    test('a blank query matches, and an unrelated one does not', () {
+      expect(matchesTeamSearch(game, '   '), isTrue);
+      expect(matchesTeamSearch(game, 'packers'), isFalse);
+    });
+  });
+
   group('groupGames', () {
     final soon = DateTime.now().add(const Duration(hours: 3));
     final past = DateTime.now().subtract(const Duration(hours: 3));
