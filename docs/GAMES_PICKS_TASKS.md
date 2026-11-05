@@ -22,7 +22,7 @@ Rules for every task:
 - [x] GP-07 Stop alternating mint ticket colors, because green is reserved for selection and wins
 - [x] GP-08 Show friendly kickoff times such as "Today · 7:20 PM" and "Sun 11/8 · 1:00 PM"
 - [x] GP-09 Add a kickoff countdown to open NFL cards that start within 24 hours
-- [ ] GP-10 Group the list under Live now, Open for picks, Waiting for an update and Finished
+- [x] GP-10 Group the list under Live now, Open for picks, Waiting for an update and Finished
 - [ ] GP-11 Add All, Open, Live and Final filter chips with counts
 - [ ] GP-12 Add team search that matches names and abbreviations
 - [ ] GP-13 Add a "no matches" state with a Clear filters action

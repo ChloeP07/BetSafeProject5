@@ -33,4 +33,24 @@ void main() {
     expect(tickets, hasLength(3));
     expect(tickets.map((ticket) => ticket.color).toSet(), {Colors.white});
   });
+
+  testWidgets('the list shows a heading for each kind of game', (tester) async {
+    final kickoff = DateTime.now().add(const Duration(days: 1));
+    await pumpApp(
+      tester,
+      stateJson(
+        nfl: nflOk(),
+        games: [
+          nflGameJson(id: 'bdl-1', status: 'live', kickoff: kickoff),
+          nflGameJson(id: 'bdl-2', kickoff: kickoff),
+          nflGameJson(id: 'bdl-3', status: 'postponed', kickoff: kickoff),
+          nflGameJson(id: 'bdl-4', status: 'final', kickoff: kickoff),
+        ],
+      ),
+    );
+    expect(find.text('Live now'), findsOneWidget);
+    expect(find.text('Open for picks'), findsOneWidget);
+    expect(find.text('Waiting for an update'), findsOneWidget);
+    expect(find.text('Finished'), findsOneWidget);
+  });
 }

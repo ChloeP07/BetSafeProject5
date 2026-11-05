@@ -58,4 +58,59 @@ void main() {
       ]);
     });
   });
+
+  group('groupGames', () {
+    final soon = DateTime.now().add(const Duration(hours: 3));
+    final past = DateTime.now().subtract(const Duration(hours: 3));
+
+    test('sorts each status into its section, in a fixed order', () {
+      final sections = groupGames([
+        gameFrom(nflGameJson(id: 'done', status: 'final', kickoff: past)),
+        gameFrom(nflGameJson(id: 'off', status: 'canceled', kickoff: past)),
+        gameFrom(nflGameJson(id: 'wait', status: 'postponed', kickoff: soon)),
+        gameFrom(nflGameJson(id: 'late', kickoff: past)),
+        gameFrom(nflGameJson(id: 'open', kickoff: soon)),
+        gameFrom(nflGameJson(id: 'live', status: 'live', kickoff: past)),
+      ]);
+      expect(sections.map((section) => section.title), [
+        'Live now',
+        'Open for picks',
+        'Waiting for an update',
+        'Finished',
+      ]);
+      expect(sections[0].games.map((g) => g.id), ['live']);
+      expect(sections[1].games.map((g) => g.id), ['open']);
+      expect(sections[2].games.map((g) => g.id), containsAll(['wait', 'late']));
+      expect(sections[3].games.map((g) => g.id), containsAll(['done', 'off']));
+    });
+
+    test('leaves out empty sections', () {
+      final sections = groupGames([gameFrom(demoGameJson())]);
+      expect(sections.map((section) => section.title), ['Open for picks']);
+    });
+
+    test('shows the most recent finished game first', () {
+      final sections = groupGames([
+        gameFrom(
+          nflGameJson(
+            id: 'old',
+            status: 'final',
+            kickoff: DateTime.utc(2030, 1, 1),
+          ),
+        ),
+        gameFrom(
+          nflGameJson(
+            id: 'new',
+            status: 'final',
+            kickoff: DateTime.utc(2030, 1, 8),
+          ),
+        ),
+      ]);
+      expect(sections.single.games.map((g) => g.id), ['new', 'old']);
+    });
+
+    test('an empty list has no sections', () {
+      expect(groupGames(const []), isEmpty);
+    });
+  });
 }
