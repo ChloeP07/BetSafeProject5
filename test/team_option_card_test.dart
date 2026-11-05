@@ -13,6 +13,7 @@ Future<void> pumpOption(
     home: Scaffold(
       body: TeamOptionCard(
         team: 'Buffalo Bills',
+        side: 'Home team',
         selected: selected,
         onTap: onTap,
       ),
@@ -26,6 +27,7 @@ void main() {
     await pumpOption(tester, onTap: () => taps++);
     expect(find.text('Buffalo Bills'), findsOneWidget);
     expect(find.text('BUF'), findsOneWidget);
+    expect(find.text('Home team'), findsOneWidget);
     await tester.tap(find.byType(TeamOptionCard));
     expect(taps, 1);
   });
@@ -58,9 +60,9 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pumpOption(tester, selected: true, onTap: () {});
       expect(
-        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills, home team')),
         isSemantics(
-          label: 'Buffalo Bills',
+          label: 'Buffalo Bills, home team',
           hasCheckedState: true,
           isChecked: true,
           isInMutuallyExclusiveGroup: true,
@@ -76,7 +78,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pumpOption(tester, onTap: () {});
       expect(
-        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills, home team')),
         isSemantics(hasCheckedState: true, isChecked: false),
       );
       semantics.dispose();
@@ -86,7 +88,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pumpOption(tester);
       expect(
-        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')),
+        tester.getSemantics(find.bySemanticsLabel('Buffalo Bills, home team')),
         isSemantics(hasEnabledState: true, isEnabled: false),
       );
       semantics.dispose();
@@ -97,10 +99,12 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pumpOption(tester, onTap: () => taps++);
       tester
-          .getSemantics(find.bySemanticsLabel('Buffalo Bills'))
+          .getSemantics(find.bySemanticsLabel('Buffalo Bills, home team'))
           .owner!
           .performAction(
-            tester.getSemantics(find.bySemanticsLabel('Buffalo Bills')).id,
+            tester
+                .getSemantics(find.bySemanticsLabel('Buffalo Bills, home team'))
+                .id,
             SemanticsAction.tap,
           );
       expect(taps, 1);
