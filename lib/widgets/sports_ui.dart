@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/demo_state.dart';
 import '../models/game_status.dart';
+import '../models/game_time.dart';
 import '../models/nfl_teams.dart';
 import '../theme.dart';
 
@@ -120,6 +121,9 @@ class MatchTicket extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheduled = game.status == 'scheduled';
     final text = Theme.of(context).textTheme;
+    final countdown = game.canPick && game.kickoff != null
+        ? kickoffCountdown(game.kickoff!)
+        : null;
     return SportsPanel(
       color: color,
       child: Column(
@@ -177,6 +181,17 @@ class MatchTicket extends StatelessWidget {
               game.kickoffLabel,
               style: const TextStyle(fontSize: 12, color: BetSafeColors.muted),
             ),
+            if (countdown != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                countdown,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: BetSafeColors.brown,
+                ),
+              ),
+            ],
           ],
           if (footer != null) ...[
             const SizedBox(height: 20),
