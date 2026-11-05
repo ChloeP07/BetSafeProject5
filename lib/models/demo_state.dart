@@ -109,6 +109,10 @@ class NflStatus {
   final bool configured, stale;
   final DateTime? fetchedAt;
   final String? error;
+
+  /// True when a configured feed failed or its data has gone out of date.
+  bool get hasProblem => configured && (stale || error != null);
+
   String get description {
     if (!configured) {
       return 'NFL data is not configured. Add the API key to the server’s .env file.';
