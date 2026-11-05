@@ -1,5 +1,6 @@
 import 'demo_state.dart';
 import 'game_status.dart';
+import 'nfl_teams.dart';
 
 /// Live games come first, then upcoming games, then anything waiting on an
 /// update, and finished games last.
@@ -41,6 +42,19 @@ enum GameFilter {
     GameFilter.live => game.tone == GameTone.live,
     GameFilter.finished => game.tone == GameTone.finished,
   };
+}
+
+/// True when either team's name or abbreviation contains [query]. A blank
+/// query matches every game.
+bool matchesTeamSearch(Game game, String query) {
+  final needle = query.trim().toLowerCase();
+  if (needle.isEmpty) return true;
+  return [
+    game.away,
+    game.home,
+    teamCode(game.away),
+    teamCode(game.home),
+  ].any((value) => value.toLowerCase().contains(needle));
 }
 
 class GameSection {
