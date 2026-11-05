@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/demo_state.dart';
 import '../models/game_list.dart';
+import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -315,9 +316,10 @@ class _GamesScreenState extends State<GamesScreen> {
                       const SizedBox(height: 12),
                     ],
                     Text(
-                      game.isSimulation
-                          ? '2× demo return · virtual coins only'
-                          : '2× virtual-coin return · no real-money odds',
+                      game.closedReason ??
+                          (game.isSimulation
+                              ? '2× demo return · virtual coins only'
+                              : '2× virtual-coin return · no real-money odds'),
                       style: const TextStyle(
                         fontSize: 12,
                         color: BetSafeColors.muted,
