@@ -139,7 +139,13 @@ class MatchTicket extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    final scheduled = game.status == 'scheduled';
+    // A game that never got a score, such as a postponed one, stays "VS". A live
+    // game keeps its score line, because its first points are on the way.
+    final showScore =
+        game.status != 'scheduled' &&
+        (game.status == 'live' ||
+            game.awayScore != null ||
+            game.homeScore != null);
     final text = Theme.of(context).textTheme;
     final countdown = game.canPick && game.kickoff != null
         ? kickoffCountdown(game.kickoff!)
@@ -191,15 +197,15 @@ class MatchTicket extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              scheduled
-                                  ? 'VS'
-                                  : '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}',
+                              showScore
+                                  ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
+                                  : 'VS',
                               style: text.headlineSmall?.copyWith(
                                 color: BetSafeColors.ink,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            if (!scheduled) ...[
+                            if (showScore) ...[
                               const SizedBox(height: 4),
                               Text(
                                 game.status == 'live'
