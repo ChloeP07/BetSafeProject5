@@ -92,6 +92,13 @@ class DemoState {
   final List<Game> games;
   final List<Pick> picks;
   final List<Collectible> collection;
+  Game? gameById(String id) {
+    for (final game in games) {
+      if (game.id == id) return game;
+    }
+    return null;
+  }
+
   Pick? pickFor(String gameId) {
     for (final pick in picks) {
       if (pick.gameId == gameId) return pick;
