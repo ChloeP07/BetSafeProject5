@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -18,6 +19,12 @@ class PickScreen extends StatefulWidget {
 class _PickScreenState extends State<PickScreen> {
   String? team;
   int stake = 100;
+
+  void _choose(String option) {
+    HapticFeedback.selectionClick();
+    setState(() => team = option);
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.api,
@@ -53,9 +60,7 @@ class _PickScreenState extends State<PickScreen> {
                     team: option,
                     side: side,
                     selected: team == option,
-                    onTap: api.busy
-                        ? null
-                        : () => setState(() => team = option),
+                    onTap: api.busy ? null : () => _choose(option),
                   ),
                 ),
               const SizedBox(height: 16),
