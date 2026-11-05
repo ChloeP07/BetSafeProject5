@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/demo_state.dart';
 import '../models/game_list.dart';
 import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
@@ -31,6 +32,19 @@ class _GamesScreenState extends State<GamesScreen> {
     filter = GameFilter.all;
     search.clear();
   });
+
+  void _openGame(Game game) {
+    final api = widget.api;
+    if (api.busy) return;
+    final canPick = api.state!.pickFor(game.id) == null && game.canPick;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => canPick
+            ? PickScreen(api: api, gameId: game.id)
+            : GameScreen(api: api, gameId: game.id),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -287,6 +301,7 @@ class _GamesScreenState extends State<GamesScreen> {
             for (final game in section.games) ...[
               MatchTicket(
                 game: game,
+                onTap: () => _openGame(game),
                 footer: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -310,17 +325,7 @@ class _GamesScreenState extends State<GamesScreen> {
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: api.busy
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    state.pickFor(game.id) == null &&
-                                        game.canPick
-                                    ? PickScreen(api: api, gameId: game.id)
-                                    : GameScreen(api: api, gameId: game.id),
-                              ),
-                            ),
+                      onPressed: api.busy ? null : () => _openGame(game),
                       style: FilledButton.styleFrom(
                         backgroundColor: BetSafeColors.darkBrown,
                         foregroundColor: BetSafeColors.cream,
