@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/demo_state.dart';
+import '../models/nfl_teams.dart';
 import '../theme.dart';
 
 /// Initial badges are deliberate placeholders; no unlicensed team artwork.
@@ -10,14 +11,6 @@ class TeamBadge extends StatelessWidget {
   final double size;
   @override
   Widget build(BuildContext context) {
-    final codes = {
-      'Kansas City Chiefs': 'KC',
-      'Buffalo Bills': 'BUF',
-      'Dallas Cowboys': 'DAL',
-      'Philadelphia Eagles': 'PHI',
-      'Green Bay Packers': 'GB',
-      'Chicago Bears': 'CHI',
-    };
     return Semantics(
       label: team,
       child: Container(
@@ -33,7 +26,7 @@ class TeamBadge extends StatelessWidget {
           ),
         ),
         child: Text(
-          codes[team] ?? team.split(' ').last.substring(0, 1),
+          teamCode(team),
           textScaler: TextScaler.noScaling,
           style: TextStyle(
             color: BetSafeColors.brown,
