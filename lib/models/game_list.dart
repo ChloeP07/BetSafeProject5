@@ -28,6 +28,15 @@ List<Game> gamesForSource(Iterable<Game> games, {required bool simulation}) =>
 
 String gameCountLabel(int count) => count == 1 ? '1 game' : '$count games';
 
+/// What the button on a game card does for this game and pick.
+String gameActionLabel(Game game, Pick? pick) {
+  if (pick != null) {
+    return pick.status == 'pending' ? 'View your pick' : 'View result';
+  }
+  if (game.canPick) return 'Make a pick';
+  return game.status == 'final' ? 'View result' : 'View game';
+}
+
 /// The status filter chips above the list.
 enum GameFilter {
   all('All'),
