@@ -12,9 +12,11 @@ String friendlyKickoff(DateTime kickoff, {DateTime? now}) {
   final local = kickoff.toLocal();
   final current = (now ?? DateTime.now()).toLocal();
   // Compare calendar dates in UTC so a daylight-saving change cannot shift them.
-  final days = DateTime.utc(local.year, local.month, local.day)
-      .difference(DateTime.utc(current.year, current.month, current.day))
-      .inDays;
+  final days = DateTime.utc(
+    local.year,
+    local.month,
+    local.day,
+  ).difference(DateTime.utc(current.year, current.month, current.day)).inDays;
   final day = switch (days) {
     0 => 'Today',
     1 => 'Tomorrow',
@@ -22,6 +24,15 @@ String friendlyKickoff(DateTime kickoff, {DateTime? now}) {
     _ => '${_weekdays[local.weekday - 1]} ${local.month}/${local.day}',
   };
   return '$day · ${_clock(local)}';
+}
+
+/// How long ago the schedule was fetched. A phone clock running behind the
+/// server gives a negative age, which also reads as "just now".
+String updatedAgo(DateTime fetchedAt, {DateTime? now}) {
+  final age = (now ?? DateTime.now()).difference(fetchedAt);
+  if (age.inMinutes < 1) return 'Updated just now';
+  if (age.inMinutes < 60) return 'Updated ${age.inMinutes} min ago';
+  return 'Updated ${age.inHours} hr ago';
 }
 
 /// Time left before kickoff, for games starting within 24 hours. Null otherwise.
