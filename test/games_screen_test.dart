@@ -98,10 +98,46 @@ void main() {
       await pumpApp(tester, state);
       await tester.tap(find.text('Live · 1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Demo games'));
+      await tester.tap(find.text('Demo games · 1'));
       await tester.pumpAndSettle();
       expect(find.byType(MatchTicket), findsOneWidget);
       expect(find.text('All · 1'), findsOneWidget);
+    });
+  });
+
+  group('NFL and demo chips', () {
+    testWidgets('show how many games each side has', (tester) async {
+      await pumpApp(
+        tester,
+        stateJson(
+          nfl: nflOk(),
+          games: [
+            nflGameJson(id: 'bdl-1'),
+            nflGameJson(id: 'bdl-2'),
+            demoGameJson(),
+          ],
+        ),
+      );
+      expect(find.text('NFL schedule · 2'), findsOneWidget);
+      expect(find.text('Demo games · 1'), findsOneWidget);
+      expect(find.text('2 games'), findsOneWidget);
+    });
+
+    testWidgets('one game reads as "1 game"', (tester) async {
+      await pumpApp(tester, stateJson());
+      expect(find.text('1 game'), findsOneWidget);
+      expect(find.text('1 games'), findsNothing);
+    });
+
+    testWidgets('an empty demo list explains itself', (tester) async {
+      await pumpApp(tester, stateJson(games: []));
+      expect(find.text('No demo games available'), findsOneWidget);
+      expect(find.text('Clear filters'), findsNothing);
+    });
+
+    testWidgets('an empty NFL list still points to demo games', (tester) async {
+      await pumpApp(tester, stateJson(nfl: nflOk(), games: [demoGameJson()]));
+      expect(find.text('No NFL games available'), findsOneWidget);
     });
   });
 
