@@ -30,7 +30,7 @@ Rules for every task:
 - [x] GP-15 Add pull to refresh on the Games list
 - [x] GP-16 Show a banner with Try again when NFL data is stale or failed to load
 - [x] GP-17 Replace the first-load spinner with placeholder game cards
-- [ ] GP-18 Show "Your pick" on cards where a pick already exists
+- [x] GP-18 Show "Your pick" on cards where a pick already exists
 - [ ] GP-19 Match the card button to the game: Make a pick, View your pick, View result, View game
 - [ ] GP-20 Give each matchup card one clear screen-reader description
 

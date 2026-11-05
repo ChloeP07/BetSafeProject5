@@ -156,6 +156,34 @@ void main() {
     });
   });
 
+  group('your pick on a card', () {
+    testWidgets('appears only on the game you picked', (tester) async {
+      await pumpApp(
+        tester,
+        stateJson(
+          games: [
+            demoGameJson(id: 'demo-1'),
+            demoGameJson(
+              id: 'demo-2',
+              away: 'Dallas Cowboys',
+              home: 'Philadelphia Eagles',
+            ),
+          ],
+          picks: [
+            pickJson(gameId: 'demo-1', team: 'Buffalo Bills', stake: 250),
+          ],
+        ),
+      );
+      expect(find.text('Your pick: Bills · 250 coins'), findsOneWidget);
+      expect(find.textContaining('Your pick:'), findsOneWidget);
+    });
+
+    testWidgets('stays away when no pick has been made', (tester) async {
+      await pumpApp(tester, stateJson());
+      expect(find.textContaining('Your pick:'), findsNothing);
+    });
+  });
+
   group('NFL problem banner', () {
     Map<String, dynamic> failingFeed() => {
       ...nflOk(),
