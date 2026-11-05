@@ -1,4 +1,6 @@
 import 'package:betsafeproject5/models/game_time.dart';
+import 'package:betsafeproject5/widgets/sports_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fixtures.dart';
@@ -43,5 +45,49 @@ void main() {
 
   test('a card without a kickoff keeps the game label', () {
     expect(gameFrom(demoGameJson()).kickoffLabel, 'Demo matchup');
+  });
+
+  group('kickoffCountdown', () {
+    String? left(Duration duration) =>
+        kickoffCountdown(now.add(duration), now: now);
+
+    test('counts hours and minutes', () {
+      expect(
+        left(const Duration(hours: 2, minutes: 15)),
+        'Kicks off in 2h 15m',
+      );
+      expect(left(const Duration(minutes: 45)), 'Kicks off in 45m');
+      expect(left(const Duration(seconds: 30)), 'Kicks off in under a minute');
+    });
+
+    test('stays quiet past kickoff or more than a day out', () {
+      expect(left(const Duration(minutes: -1)), isNull);
+      expect(left(const Duration(hours: 25)), isNull);
+    });
+  });
+
+  group('card countdown', () {
+    Future<void> pumpCard(WidgetTester tester, Map<String, dynamic> json) =>
+        tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: MatchTicket(game: gameFrom(json))),
+          ),
+        );
+    final soon = DateTime.now().add(const Duration(hours: 3));
+
+    testWidgets('shows on an open NFL game starting soon', (tester) async {
+      await pumpCard(tester, nflGameJson(kickoff: soon));
+      expect(find.textContaining('Kicks off in'), findsOneWidget);
+    });
+
+    testWidgets('stays off a live game and a far-off game', (tester) async {
+      await pumpCard(tester, nflGameJson(status: 'live', kickoff: soon));
+      expect(find.textContaining('Kicks off in'), findsNothing);
+      await pumpCard(
+        tester,
+        nflGameJson(kickoff: DateTime.now().add(const Duration(days: 3))),
+      );
+      expect(find.textContaining('Kicks off in'), findsNothing);
+    });
   });
 }
