@@ -63,6 +63,22 @@ class StatusPill extends StatelessWidget {
   );
 }
 
+/// Status pill colored by what the game's status means for the player.
+class GameStatusPill extends StatelessWidget {
+  const GameStatusPill({super.key, required this.game});
+  final Game game;
+  @override
+  Widget build(BuildContext context) {
+    final (color, background) = switch (game.tone) {
+      GameTone.open => (BetSafeColors.green, BetSafeColors.mint),
+      GameTone.live => (BetSafeColors.cream, BetSafeColors.green),
+      GameTone.waiting => (BetSafeColors.brown, BetSafeColors.clay),
+      GameTone.finished => (BetSafeColors.muted, BetSafeColors.cream),
+    };
+    return StatusPill(game.statusLabel, color: color, background: background);
+  }
+}
+
 class SportsPanel extends StatelessWidget {
   const SportsPanel({
     super.key,
@@ -114,7 +130,7 @@ class MatchTicket extends StatelessWidget {
               const SizedBox(width: 6),
               const Text('NFL', style: TextStyle(fontWeight: FontWeight.w800)),
               const Spacer(),
-              StatusPill(game.statusLabel),
+              GameStatusPill(game: game),
             ],
           ),
           const SizedBox(height: 24),
