@@ -1,4 +1,5 @@
 import 'package:betsafeproject5/models/game_status.dart';
+import 'package:betsafeproject5/theme.dart';
 import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +66,26 @@ void main() {
     test('a scheduled NFL game past kickoff is waiting, not open', () {
       expect(gameFrom(nflGameJson(kickoff: past)).tone, GameTone.waiting);
     });
+  });
+
+  testWidgets('pill colors follow the tone', (tester) async {
+    Future<StatusPill> pillFor(String status) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GameStatusPill(
+              game: gameFrom(nflGameJson(status: status, kickoff: soon)),
+            ),
+          ),
+        ),
+      );
+      return tester.widget<StatusPill>(find.byType(StatusPill));
+    }
+
+    expect((await pillFor('scheduled')).background, BetSafeColors.mint);
+    expect((await pillFor('live')).background, BetSafeColors.green);
+    expect((await pillFor('postponed')).background, BetSafeColors.clay);
+    expect((await pillFor('final')).background, BetSafeColors.cream);
   });
 
   testWidgets('the card capitalizes a raw feed status', (tester) async {
