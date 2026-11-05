@@ -42,7 +42,7 @@ Rules for every task:
 - [x] GP-24 Make the whole game card tappable, going to the same place as its button
 - [x] GP-25 Explain why a card cannot be picked: kickoff passed, postponed, canceled and so on
 - [x] GP-26 Add a summary line above the list, such as "2 live · 5 open · 1 picked"
-- [ ] GP-27 Collapse the Finished section by default, with a show/hide control
+- [x] GP-27 Collapse the Finished section by default, with a show/hide control
 - [ ] GP-28 Show "Updated N min ago" on the NFL list
 - [ ] GP-29 Extract the pick screen's team button into a tested TeamOptionCard widget
 - [ ] GP-30 Announce team options to screen readers as selected or not selected

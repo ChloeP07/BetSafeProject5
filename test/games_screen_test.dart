@@ -80,7 +80,8 @@ void main() {
 
     testWidgets('narrow the list to the chosen filter', (tester) async {
       await pumpApp(tester, mixedState());
-      expect(find.byType(MatchTicket), findsNWidgets(5));
+      // Four of the five: the finished game starts folded away.
+      expect(find.byType(MatchTicket), findsNWidgets(4));
       await tester.tap(find.text('Open · 2'));
       await tester.pumpAndSettle();
       expect(find.byType(MatchTicket), findsNWidgets(2));
@@ -88,7 +89,7 @@ void main() {
       expect(find.text('Live now'), findsNothing);
       await tester.tap(find.text('All · 5'));
       await tester.pumpAndSettle();
-      expect(find.byType(MatchTicket), findsNWidgets(5));
+      expect(find.byType(MatchTicket), findsNWidgets(4));
     });
 
     testWidgets('reset when switching between NFL and demo games', (
