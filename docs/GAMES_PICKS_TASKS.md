@@ -55,7 +55,7 @@ Rules for every task:
 - [x] GP-37 Show the kickoff countdown and "Picks close at kickoff" on the pick screen for NFL games
 - [x] GP-38 If a game closes while someone is picking, disable the form and explain why
 - [x] GP-39 If a game drops out of the server data, show a friendly message on the pick screen instead of crashing
-- [ ] GP-40 If a pick already exists for the game, go to the game view instead of allowing a duplicate
+- [x] GP-40 If a pick already exists for the game, go to the game view instead of allowing a duplicate
 
 ## Day 3: stake controls and validation feedback
 
