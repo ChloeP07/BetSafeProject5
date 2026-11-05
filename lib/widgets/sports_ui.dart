@@ -132,11 +132,22 @@ class MatchTicket extends StatelessWidget {
     this.footer,
     this.color = Colors.white,
     this.onTap,
+    this.onTeamTap,
+    this.selectedTeam,
   });
   final Game game;
   final Widget? footer;
   final Color color;
   final VoidCallback? onTap;
+
+  /// Lets a tap on either team choose it. The pick screen's team options give
+  /// screen readers the same action, so this stays out of their way.
+  final ValueChanged<String>? onTeamTap;
+  final String? selectedTeam;
+
+  VoidCallback? _tapFor(String team) =>
+      onTeamTap == null ? null : () => onTeamTap!(team);
+
   @override
   Widget build(BuildContext context) {
     // A game that never got a score, such as a postponed one, stays "VS". A live
@@ -190,6 +201,8 @@ class MatchTicket extends StatelessWidget {
                           team: game.away,
                           side: 'Away',
                           won: game.winner == game.away,
+                          picked: selectedTeam == game.away,
+                          onTap: _tapFor(game.away),
                         ),
                       ),
                       Padding(
@@ -231,6 +244,8 @@ class MatchTicket extends StatelessWidget {
                           team: game.home,
                           side: 'Home',
                           won: game.winner == game.home,
+                          picked: selectedTeam == game.home,
+                          onTap: _tapFor(game.home),
                         ),
                       ),
                     ],
@@ -273,50 +288,69 @@ class MatchTicket extends StatelessWidget {
 }
 
 class _TeamColumn extends StatelessWidget {
-  const _TeamColumn({required this.team, required this.side, this.won = false});
+  const _TeamColumn({
+    required this.team,
+    required this.side,
+    required this.won,
+    required this.picked,
+    required this.onTap,
+  });
   final String team, side;
-  final bool won;
+  final bool won, picked;
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      TeamBadge(team: team),
-      const SizedBox(height: 10),
-      Text(
-        team,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: won ? FontWeight.w900 : FontWeight.w700,
-          height: 1.25,
-          color: won ? BetSafeColors.green : null,
-        ),
-      ),
-      const SizedBox(height: 2),
-      Text(
-        side,
-        style: const TextStyle(fontSize: 11, color: BetSafeColors.muted),
-      ),
-      if (won) ...[
-        const SizedBox(height: 4),
-        // Wraps instead of overflowing when the column is narrow.
-        const Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 4,
-          children: [
-            Icon(Icons.emoji_events, size: 14, color: BetSafeColors.green),
-            Text(
-              'Winner',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: BetSafeColors.green,
-              ),
+  Widget build(BuildContext context) => Material(
+    type: MaterialType.transparency,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      excludeFromSemantics: true,
+      child: Column(
+        children: [
+          TeamBadge(team: team),
+          const SizedBox(height: 10),
+          Text(
+            team,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: won ? FontWeight.w900 : FontWeight.w700,
+              height: 1.25,
+              color: won || picked ? BetSafeColors.green : null,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            picked ? 'Your pick' : side,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: picked ? FontWeight.w700 : null,
+              color: picked ? BetSafeColors.green : BetSafeColors.muted,
+            ),
+          ),
+          if (won) ...[
+            const SizedBox(height: 4),
+            // Wraps instead of overflowing when the column is narrow.
+            const Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              children: [
+                Icon(Icons.emoji_events, size: 14, color: BetSafeColors.green),
+                Text(
+                  'Winner',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: BetSafeColors.green,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
-    ],
+        ],
+      ),
+    ),
   );
 }
 
