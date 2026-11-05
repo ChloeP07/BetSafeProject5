@@ -96,4 +96,28 @@ void main() {
       expect(find.text('Back to games'), findsNothing);
     });
   });
+
+  group('a game that drops out of the server data', () {
+    testWidgets('shows a message instead of crashing', (tester) async {
+      final json = stateJson();
+      final api = await pumpPick(tester, json);
+      json['games'] = <Map<String, dynamic>>[];
+      await api.refresh();
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('This game is no longer available'), findsOneWidget);
+      expect(find.text('Lock in pick'), findsNothing);
+    });
+
+    testWidgets('offers a way back to the list', (tester) async {
+      final json = stateJson();
+      final api = await pumpPick(tester, json);
+      json['games'] = <Map<String, dynamic>>[];
+      await api.refresh();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Back to games'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PickScreen), findsNothing);
+    });
+  });
 }

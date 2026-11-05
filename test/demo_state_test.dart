@@ -12,6 +12,12 @@ void main() {
     expect(state.dailyRemaining, 500);
   });
 
+  test('finds a game by id, and returns null for a missing one', () {
+    final state = demoState(stateJson(games: [demoGameJson(id: 'demo-7')]));
+    expect(state.gameById('demo-7')?.id, 'demo-7');
+    expect(state.gameById('demo-8'), isNull);
+  });
+
   test('falls back to a neutral name when the server sends none', () {
     final json = stateJson();
     (json['account'] as Map<String, dynamic>).remove('name');
