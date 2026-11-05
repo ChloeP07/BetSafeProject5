@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/demo_state.dart';
 import '../models/game_list.dart';
 import '../models/game_status.dart';
+import '../models/game_time.dart';
 import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -236,6 +237,10 @@ class _GamesScreenState extends State<GamesScreen> {
                   : state.nfl.description,
               style: text.bodySmall,
             ),
+          if (!isDemo && state.nfl.fetchedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(updatedAgo(state.nfl.fetchedAt!), style: text.bodySmall),
+          ],
           if (sourceGames.isNotEmpty) ...[
             const SizedBox(height: 16),
             TextField(
