@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/game_list.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
@@ -21,23 +22,7 @@ class _GamesScreenState extends State<GamesScreen> {
     final api = widget.api;
     final state = api.state!;
     final isDemo = simulation ?? !state.nfl.configured;
-    final games = state.games
-        .where((game) => game.isSimulation == isDemo)
-        .toList();
-    int rank(String status) => switch (status) {
-      'live' => 0,
-      'scheduled' => 1,
-      'final' => 3,
-      _ => 2,
-    };
-    games.sort((a, b) {
-      final byStatus = rank(a.status).compareTo(rank(b.status));
-      return byStatus != 0
-          ? byStatus
-          : (a.kickoff ?? DateTime(2000)).compareTo(
-              b.kickoff ?? DateTime(2000),
-            );
-    });
+    final games = gamesForSource(state.games, simulation: isDemo);
     final text = Theme.of(context).textTheme;
     return PageBody(
       children: [
