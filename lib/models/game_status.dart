@@ -30,6 +30,16 @@ extension GameStatusText on Game {
     _ => 'Status unknown',
   };
 
+  /// The winner of a finished game. Null if a score is missing or the game tied.
+  String? get winner {
+    final (awayPoints, homePoints) = (awayScore, homeScore);
+    if (status != 'final' || awayPoints == null || homePoints == null) {
+      return null;
+    }
+    if (awayPoints == homePoints) return null;
+    return awayPoints > homePoints ? away : home;
+  }
+
   /// One sentence-style summary of the card for screen readers.
   String get matchupDescription {
     final parts = [
@@ -42,6 +52,7 @@ extension GameStatusText on Game {
         '${teamShortName(home)} ${homeScore ?? 'no score'}.',
       );
     }
+    if (winner case final team?) parts.add('${teamShortName(team)} won.');
     if (!isSimulation && kickoff != null) {
       parts.add(
         'Kickoff ${friendlyKickoff(kickoff!).replaceAll(' · ', ' at ')}.',
