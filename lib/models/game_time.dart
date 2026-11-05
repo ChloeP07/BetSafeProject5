@@ -23,3 +23,14 @@ String friendlyKickoff(DateTime kickoff, {DateTime? now}) {
   };
   return '$day · ${_clock(local)}';
 }
+
+/// Time left before kickoff, for games starting within 24 hours. Null otherwise.
+String? kickoffCountdown(DateTime kickoff, {DateTime? now}) {
+  final left = kickoff.difference(now ?? DateTime.now());
+  if (left.isNegative || left > const Duration(hours: 24)) return null;
+  if (left.inMinutes < 1) return 'Kicks off in under a minute';
+  final minutes = left.inMinutes % 60;
+  return left.inHours == 0
+      ? 'Kicks off in ${minutes}m'
+      : 'Kicks off in ${left.inHours}h ${minutes}m';
+}
