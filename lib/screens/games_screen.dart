@@ -326,9 +326,7 @@ class _GamesScreenState extends State<GamesScreen> {
                         foregroundColor: BetSafeColors.cream,
                       ),
                       child: Text(
-                        state.pickFor(game.id) == null && game.canPick
-                            ? 'Make a pick'
-                            : 'View game',
+                        gameActionLabel(game, state.pickFor(game.id)),
                       ),
                     ),
                   ],
