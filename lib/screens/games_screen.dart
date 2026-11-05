@@ -26,6 +26,11 @@ class _GamesScreenState extends State<GamesScreen> {
     search.clear();
   });
 
+  void _clearFilters() => setState(() {
+    filter = GameFilter.all;
+    search.clear();
+  });
+
   @override
   void dispose() {
     search.dispose();
@@ -237,6 +242,17 @@ class _GamesScreenState extends State<GamesScreen> {
             message: 'Try refreshing the schedule, or choose Demo games to try the full pick flow.',
             icon: Icons.sports_football_outlined,
           ),
+        if (sourceGames.isNotEmpty && games.isEmpty) ...[
+          const EmptyMessage(
+            title: 'No games match',
+            message: 'Try a different team or filter, or clear them to see every game.',
+            icon: Icons.search_off,
+          ),
+          OutlinedButton(
+            onPressed: _clearFilters,
+            child: const Text('Clear filters'),
+          ),
+        ],
         const SizedBox(height: 16),
         for (final section in groupGames(games)) ...[
           Semantics(
