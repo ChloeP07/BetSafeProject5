@@ -42,7 +42,12 @@ class _PickScreenState extends State<PickScreen> {
         body: SafeArea(
           child: PageBody(
             children: [
-              MatchTicket(game: game, color: BetSafeColors.clay),
+              MatchTicket(
+                game: game,
+                color: BetSafeColors.clay,
+                selectedTeam: team,
+                onTeamTap: api.busy ? null : _choose,
+              ),
               const SizedBox(height: 28),
               Text(
                 'Who takes the win?',
