@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/game_list.dart';
+import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
@@ -289,6 +290,15 @@ class _GamesScreenState extends State<GamesScreen> {
                 footer: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (state.pickFor(game.id) case final pick?) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: StatusPill(
+                          'Your pick: ${teamShortName(pick.team)} · ${pick.stake} coins',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     Text(
                       game.isSimulation
                           ? '2× demo return · virtual coins only'
