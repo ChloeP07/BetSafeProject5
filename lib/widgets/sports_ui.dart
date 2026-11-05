@@ -152,7 +152,12 @@ class MatchTicket extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(child: _TeamColumn(team: game.away)),
+                      Expanded(
+                        child: _TeamColumn(
+                          team: game.away,
+                          won: game.winner == game.away,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Column(
@@ -185,7 +190,12 @@ class MatchTicket extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Expanded(child: _TeamColumn(team: game.home)),
+                      Expanded(
+                        child: _TeamColumn(
+                          team: game.home,
+                          won: game.winner == game.home,
+                        ),
+                      ),
                     ],
                   ),
                   if (!game.isSimulation) ...[
@@ -226,8 +236,9 @@ class MatchTicket extends StatelessWidget {
 }
 
 class _TeamColumn extends StatelessWidget {
-  const _TeamColumn({required this.team});
+  const _TeamColumn({required this.team, this.won = false});
   final String team;
+  final bool won;
   @override
   Widget build(BuildContext context) => Column(
     children: [
@@ -236,12 +247,31 @@ class _TeamColumn extends StatelessWidget {
       Text(
         team,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w700,
+          fontWeight: won ? FontWeight.w900 : FontWeight.w700,
           height: 1.25,
+          color: won ? BetSafeColors.green : null,
         ),
       ),
+      if (won) ...[
+        const SizedBox(height: 4),
+        const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events, size: 14, color: BetSafeColors.green),
+            SizedBox(width: 4),
+            Text(
+              'Winner',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: BetSafeColors.green,
+              ),
+            ),
+          ],
+        ),
+      ],
     ],
   );
 }
