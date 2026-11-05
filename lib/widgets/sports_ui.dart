@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/demo_state.dart';
+import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
 import '../theme.dart';
 
@@ -113,13 +114,7 @@ class MatchTicket extends StatelessWidget {
               const SizedBox(width: 6),
               const Text('NFL', style: TextStyle(fontWeight: FontWeight.w800)),
               const Spacer(),
-              StatusPill(
-                scheduled
-                    ? (game.isSimulation ? 'Demo matchup' : 'Scheduled')
-                    : game.status == 'live'
-                    ? (game.isSimulation ? 'Simulation · live' : 'In progress')
-                    : (game.isSimulation ? 'Simulation · final' : game.status),
-              ),
+              StatusPill(game.statusLabel),
             ],
           ),
           const SizedBox(height: 24),
