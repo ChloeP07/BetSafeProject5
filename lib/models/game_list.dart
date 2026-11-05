@@ -37,6 +37,20 @@ String gameActionLabel(Game game, Pick? pick) {
   return game.status == 'final' ? 'View result' : 'View game';
 }
 
+/// One line about a list, such as "2 live · 5 open · 1 picked". Zero counts are
+/// left out, so a list with nothing to report gives an empty string.
+String gameSummary(Iterable<Game> games, Iterable<Pick> picks) {
+  final ids = games.map((game) => game.id).toSet();
+  final live = games.where((game) => game.tone == GameTone.live).length;
+  final open = games.where((game) => game.tone == GameTone.open).length;
+  final picked = picks.where((pick) => ids.contains(pick.gameId)).length;
+  return [
+    if (live > 0) '$live live',
+    if (open > 0) '$open open',
+    if (picked > 0) '$picked picked',
+  ].join(' · ');
+}
+
 /// The status filter chips above the list.
 enum GameFilter {
   all('All'),
