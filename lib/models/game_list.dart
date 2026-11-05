@@ -25,6 +25,24 @@ List<Game> gamesForSource(Iterable<Game> games, {required bool simulation}) =>
     games.where((game) => game.isSimulation == simulation).toList()
       ..sort(compareGames);
 
+/// The status filter chips above the list.
+enum GameFilter {
+  all('All'),
+  open('Open'),
+  live('Live'),
+  finished('Final');
+
+  const GameFilter(this.label);
+  final String label;
+
+  bool matches(Game game) => switch (this) {
+    GameFilter.all => true,
+    GameFilter.open => game.tone == GameTone.open,
+    GameFilter.live => game.tone == GameTone.live,
+    GameFilter.finished => game.tone == GameTone.finished,
+  };
+}
+
 class GameSection {
   const GameSection(this.title, this.games);
   final String title;
