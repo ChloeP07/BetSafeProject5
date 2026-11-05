@@ -316,7 +316,9 @@ class _TeamColumn extends StatelessWidget {
               fontSize: 13,
               fontWeight: won ? FontWeight.w900 : FontWeight.w700,
               height: 1.25,
-              color: won || picked ? BetSafeColors.green : null,
+              // Set directly, because the Material above resets inherited text
+              // styles to the theme's, which are light in dark mode.
+              color: won || picked ? BetSafeColors.green : BetSafeColors.ink,
             ),
           ),
           const SizedBox(height: 2),
