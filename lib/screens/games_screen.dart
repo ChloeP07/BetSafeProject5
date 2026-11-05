@@ -17,13 +17,22 @@ class GamesScreen extends StatefulWidget {
 
 class _GamesScreenState extends State<GamesScreen> {
   bool? simulation;
+  GameFilter filter = GameFilter.all;
+
+  void _chooseSource(bool demo) => setState(() {
+    simulation = demo;
+    filter = GameFilter.all;
+  });
+
   @override
   Widget build(BuildContext context) {
     final api = widget.api;
     final state = api.state!;
     final isDemo = simulation ?? !state.nfl.configured;
-    final games = gamesForSource(state.games, simulation: isDemo);
+    final sourceGames = gamesForSource(state.games, simulation: isDemo);
+    final games = sourceGames.where(filter.matches).toList();
     final text = Theme.of(context).textTheme;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return PageBody(
       children: [
         Row(
@@ -153,12 +162,12 @@ class _GamesScreenState extends State<GamesScreen> {
             ChoiceChip(
               label: const Text('NFL schedule'),
               selected: !isDemo,
-              onSelected: (_) => setState(() => simulation = false),
+              onSelected: (_) => _chooseSource(false),
             ),
             ChoiceChip(
               label: const Text('Demo games'),
               selected: isDemo,
-              onSelected: (_) => setState(() => simulation = true),
+              onSelected: (_) => _chooseSource(true),
             ),
           ],
         ),
@@ -169,7 +178,29 @@ class _GamesScreenState extends State<GamesScreen> {
               : state.nfl.description,
           style: text.bodySmall,
         ),
-        if (!isDemo && games.isEmpty)
+        if (sourceGames.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final option in GameFilter.values)
+                ChoiceChip(
+                  label: Text(
+                    '${option.label} · ${sourceGames.where(option.matches).length}',
+                  ),
+                  selected: filter == option,
+                  selectedColor: BetSafeColors.mint,
+                  checkmarkColor: BetSafeColors.green,
+                  labelStyle: TextStyle(
+                    color: filter == option ? BetSafeColors.green : onSurface,
+                  ),
+                  onSelected: (_) => setState(() => filter = option),
+                ),
+            ],
+          ),
+        ],
+        if (!isDemo && sourceGames.isEmpty)
           const EmptyMessage(
             title: 'No NFL games available',
             message: 'Try refreshing the schedule, or choose Demo games to try the full pick flow.',
