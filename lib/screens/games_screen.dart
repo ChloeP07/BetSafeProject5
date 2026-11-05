@@ -176,10 +176,9 @@ class _GamesScreenState extends State<GamesScreen> {
             icon: Icons.sports_football_outlined,
           ),
         const SizedBox(height: 16),
-        for (final (index, game) in games.indexed) ...[
+        for (final game in games) ...[
           MatchTicket(
             game: game,
-            color: index.isEven ? Colors.white : BetSafeColors.mint,
             footer: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
