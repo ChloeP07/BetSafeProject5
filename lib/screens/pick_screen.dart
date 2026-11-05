@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -56,6 +57,7 @@ class _PickScreenState extends State<PickScreen> {
       final game = state.games.firstWhere((item) => item.id == widget.gameId);
       final text = Theme.of(context).textTheme;
       final canAfford = stake <= state.coins && stake <= state.dailyRemaining;
+      final locked = api.busy || !game.canPick;
       return Scaffold(
         appBar: AppBar(title: const Text('Make your pick')),
         body: SafeArea(
@@ -65,8 +67,15 @@ class _PickScreenState extends State<PickScreen> {
                 game: game,
                 color: BetSafeColors.clay,
                 selectedTeam: team,
-                onTeamTap: api.busy ? null : _choose,
+                onTeamTap: locked ? null : _choose,
               ),
+              if (game.closedReason case final reason?) ...[
+                const SizedBox(height: 16),
+                _ClosedNotice(
+                  reason: reason,
+                  onBack: () => Navigator.of(context).pop(),
+                ),
+              ],
               const SizedBox(height: 28),
               Text(
                 'Who takes the win?',
@@ -106,7 +115,7 @@ class _PickScreenState extends State<PickScreen> {
                     team: option,
                     side: side,
                     selected: team == option,
-                    onTap: api.busy ? null : () => _choose(option),
+                    onTap: locked ? null : () => _choose(option),
                   ),
                 ),
               if (team case final chosen?)
@@ -135,7 +144,7 @@ class _PickScreenState extends State<PickScreen> {
                       (value) => ChoiceChip(
                         label: Text('$value coins'),
                         selected: stake == value,
-                        onSelected: api.busy
+                        onSelected: locked
                             ? null
                             : (_) => setState(() => stake = value),
                         selectedColor: BetSafeColors.mint,
@@ -197,7 +206,7 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: api.busy || team == null || !canAfford
+                onPressed: locked || team == null || !canAfford
                     ? null
                     : () async {
                         final success = await api.placePick(
@@ -220,5 +229,41 @@ class _PickScreenState extends State<PickScreen> {
         ),
       );
     },
+  );
+}
+
+/// Explains why a game closed while the player was choosing.
+class _ClosedNotice extends StatelessWidget {
+  const _ClosedNotice({required this.reason, required this.onBack});
+  final String reason;
+  final VoidCallback onBack;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    liveRegion: true,
+    child: SportsPanel(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.lock_outline, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(reason)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: onBack,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: BetSafeColors.brown,
+            ),
+            child: const Text('Back to games'),
+          ),
+        ],
+      ),
+    ),
   );
 }
