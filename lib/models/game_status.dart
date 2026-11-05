@@ -40,6 +40,13 @@ extension GameStatusText on Game {
     return awayPoints > homePoints ? away : home;
   }
 
+  /// True for a finished game with two equal scores.
+  bool get isTied =>
+      status == 'final' &&
+      awayScore != null &&
+      homeScore != null &&
+      awayScore == homeScore;
+
   /// One sentence-style summary of the card for screen readers.
   String get matchupDescription {
     final parts = [
@@ -53,6 +60,7 @@ extension GameStatusText on Game {
       );
     }
     if (winner case final team?) parts.add('${teamShortName(team)} won.');
+    if (isTied) parts.add('Tied.');
     if (!isSimulation && kickoff != null) {
       parts.add(
         'Kickoff ${friendlyKickoff(kickoff!).replaceAll(' · ', ' at ')}.',
