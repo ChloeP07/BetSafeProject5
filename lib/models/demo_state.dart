@@ -1,3 +1,5 @@
+import 'game_time.dart';
+
 class Game {
   const Game({
     required this.id,
@@ -29,11 +31,8 @@ class Game {
   bool get canPick =>
       status == 'scheduled' &&
       (isSimulation || (kickoff?.isAfter(DateTime.now()) ?? false));
-  String get kickoffLabel {
-    if (kickoff == null) return label;
-    final local = kickoff!.toLocal();
-    return '${local.month}/${local.day} · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')} local';
-  }
+  String get kickoffLabel =>
+      kickoff == null ? label : friendlyKickoff(kickoff!);
 }
 
 class Pick {
