@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:betsafeproject5/main.dart';
 import 'package:betsafeproject5/models/demo_state.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -106,3 +109,20 @@ BetSafeApi apiWith(
     return http.Response(jsonEncode(json), 200);
   }),
 );
+
+/// Pumps the whole app on a tall phone-width screen, so every card is built.
+Future<BetSafeApi> pumpApp(
+  WidgetTester tester,
+  Map<String, dynamic> json, {
+  void Function(http.Request request)? onRequest,
+}) async {
+  tester.view.physicalSize = const Size(420, 4000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  final api = apiWith(json, onRequest: onRequest);
+  addTearDown(api.dispose);
+  await tester.pumpWidget(BetSafeApp(api: api));
+  await tester.pumpAndSettle();
+  return api;
+}
