@@ -25,14 +25,18 @@ class _PickScreenState extends State<PickScreen> {
   int stake = 100;
 
   /// Keeps the kickoff countdown current between server refreshes.
-  late final Timer _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
-    if (mounted) setState(() {});
-  });
+  late final Timer _ticker;
+
+  /// True once this screen has taken charge of moving on to the game view, so
+  /// it can never open that view twice.
+  bool _leaving = false;
 
   @override
   void initState() {
     super.initState();
-    _ticker;
+    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -46,6 +50,23 @@ class _PickScreenState extends State<PickScreen> {
     final selecting = team != option;
     if (selecting) HapticFeedback.selectionClick();
     setState(() => team = selecting ? option : null);
+  }
+
+  void _showGame() => Navigator.of(context).pushReplacement(
+    MaterialPageRoute<void>(
+      builder: (_) => GameScreen(api: widget.api, gameId: widget.gameId),
+    ),
+  );
+
+  Future<void> _lockIn() async {
+    _leaving = true;
+    final success = await widget.api.placePick(widget.gameId, team!, stake);
+    if (!mounted) return;
+    if (success) {
+      _showGame();
+    } else {
+      _leaving = false;
+    }
   }
 
   @override
@@ -77,7 +98,15 @@ class _PickScreenState extends State<PickScreen> {
       }
       final text = Theme.of(context).textTheme;
       final canAfford = stake <= state.coins && stake <= state.dailyRemaining;
-      final locked = api.busy || !game.canPick;
+      final picked = state.pickFor(widget.gameId) != null;
+      // A pick that arrives from elsewhere, such as a refresh, ends this form.
+      if (picked && !_leaving) {
+        _leaving = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showGame();
+        });
+      }
+      final locked = api.busy || picked || !game.canPick;
       return Scaffold(
         appBar: AppBar(title: const Text('Make your pick')),
         body: SafeArea(
@@ -228,20 +257,7 @@ class _PickScreenState extends State<PickScreen> {
               FilledButton(
                 onPressed: locked || team == null || !canAfford
                     ? null
-                    : () async {
-                        final success = await api.placePick(
-                          game.id,
-                          team!,
-                          stake,
-                        );
-                        if (!context.mounted || !success) return;
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                GameScreen(api: api, gameId: game.id),
-                          ),
-                        );
-                      },
+                    : _lockIn,
                 child: Text(api.busy ? 'Saving pick…' : 'Lock in pick'),
               ),
             ],
