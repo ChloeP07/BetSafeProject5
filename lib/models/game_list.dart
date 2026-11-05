@@ -83,8 +83,9 @@ bool matchesTeamSearch(Game game, String query) {
 }
 
 class GameSection {
-  const GameSection(this.title, this.games);
+  const GameSection(this.title, this.tone, this.games);
   final String title;
+  final GameTone tone;
   final List<Game> games;
 }
 
@@ -101,9 +102,13 @@ List<GameSection> groupGames(Iterable<Game> games) {
       return byKickoff != 0 ? byKickoff : a.id.compareTo(b.id);
     });
   return [
-    GameSection('Live now', withTone(GameTone.live)),
-    GameSection('Open for picks', withTone(GameTone.open)),
-    GameSection('Waiting for an update', withTone(GameTone.waiting)),
-    GameSection('Finished', finished),
+    GameSection('Live now', GameTone.live, withTone(GameTone.live)),
+    GameSection('Open for picks', GameTone.open, withTone(GameTone.open)),
+    GameSection(
+      'Waiting for an update',
+      GameTone.waiting,
+      withTone(GameTone.waiting),
+    ),
+    GameSection('Finished', GameTone.finished, finished),
   ].where((section) => section.games.isNotEmpty).toList();
 }
