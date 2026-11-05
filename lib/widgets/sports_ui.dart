@@ -86,25 +86,43 @@ class SportsPanel extends StatelessWidget {
     required this.child,
     this.color = Colors.white,
     this.padding = const EdgeInsets.all(20),
+    this.onTap,
   });
   final Widget child;
   final Color color;
   final EdgeInsetsGeometry padding;
+
+  /// Makes the whole panel tappable. Screen readers skip this, so a tappable
+  /// panel needs its own button for the same action.
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: DefaultTextStyle.merge(
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(24);
+    final content = DefaultTextStyle.merge(
       style: const TextStyle(color: BetSafeColors.ink),
       child: IconTheme(
         data: const IconThemeData(color: BetSafeColors.ink),
         child: child,
       ),
-    ),
-  );
+    );
+    if (onTap == null) {
+      return Container(
+        padding: padding,
+        decoration: BoxDecoration(color: color, borderRadius: radius),
+        child: content,
+      );
+    }
+    return Material(
+      color: color,
+      borderRadius: radius,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        excludeFromSemantics: true,
+        child: Padding(padding: padding, child: content),
+      ),
+    );
+  }
 }
 
 class MatchTicket extends StatelessWidget {
@@ -113,10 +131,12 @@ class MatchTicket extends StatelessWidget {
     required this.game,
     this.footer,
     this.color = Colors.white,
+    this.onTap,
   });
   final Game game;
   final Widget? footer;
   final Color color;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
     final scheduled = game.status == 'scheduled';
@@ -126,6 +146,7 @@ class MatchTicket extends StatelessWidget {
         : null;
     return SportsPanel(
       color: color,
+      onTap: onTap,
       child: Column(
         children: [
           // One description for the whole matchup. The footer keeps its own
@@ -144,8 +165,14 @@ class MatchTicket extends StatelessWidget {
                         'NFL',
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),
-                      const Spacer(),
-                      GameStatusPill(game: game),
+                      const SizedBox(width: 12),
+                      // A long status wraps inside its pill on narrow screens.
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: GameStatusPill(game: game),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -265,11 +292,13 @@ class _TeamColumn extends StatelessWidget {
       ),
       if (won) ...[
         const SizedBox(height: 4),
-        const Row(
-          mainAxisSize: MainAxisSize.min,
+        // Wraps instead of overflowing when the column is narrow.
+        const Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
           children: [
             Icon(Icons.emoji_events, size: 14, color: BetSafeColors.green),
-            SizedBox(width: 4),
             Text(
               'Winner',
               style: TextStyle(
