@@ -72,7 +72,9 @@ class Collectible {
 class DemoState {
   DemoState.fromJson(Map<String, dynamic> json)
     : nfl = NflStatus.fromJson(json['nfl'] as Map<String, dynamic>? ?? {}),
+      playerName = json['account']['name'] as String? ?? 'Demo player',
       coins = json['account']['coins'] as int,
+      dailyLimit = json['account']['dailyLimit'] as int,
       dailyRemaining =
           (json['account']['dailyLimit'] as int) -
           (json['account']['dailyStaked'] as int),
@@ -86,7 +88,8 @@ class DemoState {
           .map((item) => Collectible.fromJson(item as Map<String, dynamic>))
           .toList();
   final NflStatus nfl;
-  final int coins, dailyRemaining;
+  final String playerName;
+  final int coins, dailyLimit, dailyRemaining;
   final List<Game> games;
   final List<Pick> picks;
   final List<Collectible> collection;
