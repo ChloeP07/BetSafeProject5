@@ -195,12 +195,18 @@ class _GamesScreenState extends State<GamesScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            isDemo
-                ? 'Simulation · sample games, scores and payouts.'
-                : state.nfl.description,
-            style: text.bodySmall,
-          ),
+          if (!isDemo && state.nfl.hasProblem)
+            _NflProblemBanner(
+              message: state.nfl.description,
+              onRetry: api.busy ? null : api.refresh,
+            )
+          else
+            Text(
+              isDemo
+                  ? 'Simulation · sample games, scores and payouts.'
+                  : state.nfl.description,
+              style: text.bodySmall,
+            ),
           if (sourceGames.isNotEmpty) ...[
             const SizedBox(height: 16),
             TextField(
@@ -330,4 +336,41 @@ class _GamesScreenState extends State<GamesScreen> {
       ),
     );
   }
+}
+
+/// Says plainly that the NFL feed failed or is out of date, and offers a retry.
+class _NflProblemBanner extends StatelessWidget {
+  const _NflProblemBanner({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback? onRetry;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    liveRegion: true,
+    child: SportsPanel(
+      color: BetSafeColors.clay,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.cloud_off, size: 18, color: BetSafeColors.brown),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          TextButton(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(
+              foregroundColor: BetSafeColors.brown,
+              minimumSize: const Size(48, 48),
+            ),
+            child: const Text('Try again'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
