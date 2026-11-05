@@ -1,3 +1,4 @@
+import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/fixtures.dart';
 
 Finder option(String team) => find.widgetWithText(TeamOptionCard, team);
+
+Finder onTicket(String text) =>
+    find.descendant(of: find.byType(MatchTicket), matching: find.text(text));
 
 FilledButton lockInButton(WidgetTester tester) => tester.widget<FilledButton>(
   find.widgetWithText(FilledButton, 'Lock in pick'),
@@ -56,6 +60,40 @@ void main() {
     );
     // Only selecting buzzes, not clearing.
     expect(haptics, hasLength(1));
+  });
+
+  group('tapping a team on the ticket', () {
+    testWidgets('selects it, matching the option below', (tester) async {
+      await pumpPick(tester, stateJson());
+      await tester.tap(onTicket('Buffalo Bills'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TeamOptionCard>(option('Buffalo Bills')).selected,
+        isTrue,
+      );
+      expect(onTicket('Your pick'), findsOneWidget);
+      expect(find.text('You’re backing the Bills'), findsOneWidget);
+    });
+
+    testWidgets('a second tap clears it', (tester) async {
+      await pumpPick(tester, stateJson());
+      await tester.tap(onTicket('Buffalo Bills'));
+      await tester.pumpAndSettle();
+      await tester.tap(onTicket('Buffalo Bills'));
+      await tester.pumpAndSettle();
+      expect(onTicket('Your pick'), findsNothing);
+      expect(onTicket('Home'), findsOneWidget);
+      expect(lockInButton(tester).onPressed, isNull);
+    });
+
+    testWidgets('a choice below shows on the ticket too', (tester) async {
+      await pumpPick(tester, stateJson());
+      await tester.tap(option('Kansas City Chiefs'));
+      await tester.pumpAndSettle();
+      expect(onTicket('Your pick'), findsOneWidget);
+      expect(onTicket('Away'), findsNothing);
+      expect(onTicket('Home'), findsOneWidget);
+    });
   });
 
   group('backing line', () {
