@@ -38,7 +38,7 @@ Rules for every task:
 
 - [x] GP-21 Highlight the winning team on final cards, only when both scores are known
 - [x] GP-22 Show "Tied" on tied final cards, with no winner highlighted
-- [ ] GP-23 Tag each team Away or Home on the card, replacing the shared "Away / Home" caption
+- [x] GP-23 Tag each team Away or Home on the card, replacing the shared "Away / Home" caption
 - [ ] GP-24 Make the whole game card tappable, going to the same place as its button
 - [ ] GP-25 Explain why a card cannot be picked: kickoff passed, postponed, canceled and so on
 - [ ] GP-26 Add a summary line above the list, such as "2 live · 5 open · 1 picked"

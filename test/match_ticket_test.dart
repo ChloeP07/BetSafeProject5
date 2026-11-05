@@ -13,6 +13,17 @@ Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
     );
 
 void main() {
+  testWidgets('tags each team Away or Home', (tester) async {
+    await pumpTicket(tester, demoGameJson());
+    expect(find.text('Away'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Away / Home'), findsNothing);
+    final chiefs = tester.getTopLeft(find.text('Kansas City Chiefs')).dx;
+    final bills = tester.getTopLeft(find.text('Buffalo Bills')).dx;
+    expect(tester.getCenter(find.text('Away')).dx, lessThan(bills));
+    expect(tester.getCenter(find.text('Home')).dx, greaterThan(chiefs));
+  });
+
   group('tied game', () {
     final tied = nflGameJson(status: 'final', awayScore: 20, homeScore: 20);
 
