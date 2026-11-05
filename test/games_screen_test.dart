@@ -53,4 +53,55 @@ void main() {
     expect(find.text('Waiting for an update'), findsOneWidget);
     expect(find.text('Finished'), findsOneWidget);
   });
+
+  group('filter chips', () {
+    Map<String, dynamic> mixedState() {
+      final kickoff = DateTime.now().add(const Duration(days: 1));
+      return stateJson(
+        nfl: nflOk(),
+        games: [
+          nflGameJson(id: 'bdl-1', status: 'live', kickoff: kickoff),
+          nflGameJson(id: 'bdl-2', kickoff: kickoff),
+          nflGameJson(id: 'bdl-3', kickoff: kickoff),
+          nflGameJson(id: 'bdl-4', status: 'postponed', kickoff: kickoff),
+          nflGameJson(id: 'bdl-5', status: 'final', kickoff: kickoff),
+        ],
+      );
+    }
+
+    testWidgets('show a count for each filter', (tester) async {
+      await pumpApp(tester, mixedState());
+      expect(find.text('All · 5'), findsOneWidget);
+      expect(find.text('Open · 2'), findsOneWidget);
+      expect(find.text('Live · 1'), findsOneWidget);
+      expect(find.text('Final · 1'), findsOneWidget);
+    });
+
+    testWidgets('narrow the list to the chosen filter', (tester) async {
+      await pumpApp(tester, mixedState());
+      expect(find.byType(MatchTicket), findsNWidgets(5));
+      await tester.tap(find.text('Open · 2'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsNWidgets(2));
+      expect(find.text('Open for picks'), findsOneWidget);
+      expect(find.text('Live now'), findsNothing);
+      await tester.tap(find.text('All · 5'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsNWidgets(5));
+    });
+
+    testWidgets('reset when switching between NFL and demo games', (
+      tester,
+    ) async {
+      final state = mixedState();
+      (state['games'] as List).add(demoGameJson());
+      await pumpApp(tester, state);
+      await tester.tap(find.text('Live · 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Demo games'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MatchTicket), findsOneWidget);
+      expect(find.text('All · 1'), findsOneWidget);
+    });
+  });
 }

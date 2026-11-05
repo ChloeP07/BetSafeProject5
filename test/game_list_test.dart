@@ -59,6 +59,20 @@ void main() {
     });
   });
 
+  test('GameFilter sorts statuses into the matching chip', () {
+    final soon = DateTime.now().add(const Duration(hours: 3));
+    final open = gameFrom(nflGameJson(kickoff: soon));
+    final live = gameFrom(nflGameJson(status: 'live', kickoff: soon));
+    final done = gameFrom(nflGameJson(status: 'final', kickoff: soon));
+    final off = gameFrom(nflGameJson(status: 'canceled', kickoff: soon));
+    final wait = gameFrom(nflGameJson(status: 'delayed', kickoff: soon));
+    final all = [open, live, done, off, wait];
+    expect(all.where(GameFilter.all.matches), hasLength(5));
+    expect(all.where(GameFilter.open.matches), [open]);
+    expect(all.where(GameFilter.live.matches), [live]);
+    expect(all.where(GameFilter.finished.matches), [done, off]);
+  });
+
   group('groupGames', () {
     final soon = DateTime.now().add(const Duration(hours: 3));
     final past = DateTime.now().subtract(const Duration(hours: 3));
