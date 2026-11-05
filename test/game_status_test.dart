@@ -88,6 +88,68 @@ void main() {
     expect((await pillFor('final')).background, BetSafeColors.cream);
   });
 
+  group('matchupDescription', () {
+    test('describes a demo game and labels it a simulation', () {
+      expect(
+        gameFrom(demoGameJson()).matchupDescription,
+        'Kansas City Chiefs at Buffalo Bills. Demo matchup.',
+      );
+      expect(
+        gameFrom(demoGameJson(status: 'live', awayScore: 20, homeScore: 24))
+            .matchupDescription,
+        'Kansas City Chiefs at Buffalo Bills. Simulation, live. Chiefs 20, Bills 24.',
+      );
+    });
+
+    test('reads out an NFL kickoff in words', () {
+      final kickoff = DateTime.now().add(const Duration(days: 30));
+      final text = gameFrom(nflGameJson(kickoff: kickoff)).matchupDescription;
+      expect(
+        text,
+        startsWith('Kansas City Chiefs at Buffalo Bills. Scheduled.'),
+      );
+      expect(text, contains('Kickoff '));
+      expect(text, isNot(contains('·')));
+    });
+
+    test('says when a score is missing, and never makes one up', () {
+      final text = gameFrom(nflGameJson(status: 'live', awayScore: 7))
+          .matchupDescription;
+      expect(text, contains('Chiefs 7, Bills no score.'));
+    });
+
+    test('leaves scores out when the feed has none', () {
+      final text = gameFrom(nflGameJson(status: 'postponed'))
+          .matchupDescription;
+      expect(text, isNot(contains('no score')));
+    });
+  });
+
+  testWidgets('the card reads as one description and keeps its button', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MatchTicket(
+            game: gameFrom(demoGameJson()),
+            footer: FilledButton(onPressed: () {}, child: const Text('Go')),
+          ),
+        ),
+      ),
+    );
+    expect(
+      find.bySemanticsLabel(
+        'Kansas City Chiefs at Buffalo Bills. Demo matchup.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Kansas City Chiefs'), findsNothing);
+    expect(find.bySemanticsLabel('Go'), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('the card capitalizes a raw feed status', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

@@ -32,7 +32,7 @@ Rules for every task:
 - [x] GP-17 Replace the first-load spinner with placeholder game cards
 - [x] GP-18 Show "Your pick" on cards where a pick already exists
 - [x] GP-19 Match the card button to the game: Make a pick, View your pick, View result, View game
-- [ ] GP-20 Give each matchup card one clear screen-reader description
+- [x] GP-20 Give each matchup card one clear screen-reader description
 
 ## Day 2: matchup cards and team selection
 
