@@ -1,16 +1,8 @@
 import 'package:betsafeproject5/models/game_status.dart';
-import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fixtures.dart';
-
-Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
-    tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: MatchTicket(game: gameFrom(json))),
-      ),
-    );
 
 void main() {
   testWidgets('a final card fits a narrow phone at large text', (tester) async {

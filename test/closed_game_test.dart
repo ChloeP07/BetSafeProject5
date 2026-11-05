@@ -1,7 +1,6 @@
 import 'package:betsafeproject5/models/game_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'match_ticket_test.dart' show pumpTicket;
 import 'support/fixtures.dart';
 
 void main() {

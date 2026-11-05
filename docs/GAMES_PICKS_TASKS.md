@@ -48,7 +48,7 @@ Rules for every task:
 - [x] GP-30 Announce team options to screen readers as selected or not selected
 - [x] GP-31 Add an Away or Home tag to each team option
 - [x] GP-32 Animate team selection, respecting the reduced-motion setting
-- [ ] GP-33 Add a light haptic when a team is selected
+- [x] GP-33 Add a light haptic when a team is selected
 - [ ] GP-34 Add a confirmation line such as "You're backing the Bills"
 - [ ] GP-35 Let a second tap on the selected team clear the choice
 - [ ] GP-36 Let a tap on a team in the pick screen's ticket select that team

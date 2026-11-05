@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:betsafeproject5/main.dart';
 import 'package:betsafeproject5/models/demo_state.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
-import 'package:flutter/widgets.dart';
+import 'package:betsafeproject5/widgets/sports_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -126,3 +127,23 @@ Future<BetSafeApi> pumpApp(
   await tester.pumpAndSettle();
   return api;
 }
+
+/// Pumps the whole app and opens the pick screen for its only open game.
+Future<BetSafeApi> pumpPick(
+  WidgetTester tester,
+  Map<String, dynamic> json, {
+  void Function(http.Request request)? onRequest,
+}) async {
+  final api = await pumpApp(tester, json, onRequest: onRequest);
+  await tester.tap(find.text('Make a pick'));
+  await tester.pumpAndSettle();
+  return api;
+}
+
+/// Pumps one matchup card on its own.
+Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
+    tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: MatchTicket(game: gameFrom(json))),
+      ),
+    );
