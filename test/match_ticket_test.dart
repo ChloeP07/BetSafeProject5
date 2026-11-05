@@ -13,6 +13,21 @@ Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
     );
 
 void main() {
+  testWidgets('a final card fits a narrow phone at large text', (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pumpTicket(
+      tester,
+      demoGameJson(status: 'final', awayScore: 20, homeScore: 27),
+    );
+    expect(find.text('Winner'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('tags each team Away or Home', (tester) async {
     await pumpTicket(tester, demoGameJson());
     expect(find.text('Away'), findsOneWidget);
