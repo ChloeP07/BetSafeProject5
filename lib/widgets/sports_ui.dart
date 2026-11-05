@@ -128,71 +128,91 @@ class MatchTicket extends StatelessWidget {
       color: color,
       child: Column(
         children: [
-          Row(
-            children: [
-              const Icon(Icons.sports_football, size: 16),
-              const SizedBox(width: 6),
-              const Text('NFL', style: TextStyle(fontWeight: FontWeight.w800)),
-              const Spacer(),
-              GameStatusPill(game: game),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: _TeamColumn(team: game.away)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Column(
-                  children: [
-                    Text(
-                      scheduled
-                          ? 'VS'
-                          : '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.ink,
-                        fontWeight: FontWeight.w900,
+          // One description for the whole matchup. The footer keeps its own
+          // buttons and text, so it stays outside this.
+          Semantics(
+            container: true,
+            label: game.matchupDescription,
+            child: ExcludeSemantics(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.sports_football, size: 16),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'NFL',
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
-                    ),
-                    const SizedBox(height: 4),
+                      const Spacer(),
+                      GameStatusPill(game: game),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: _TeamColumn(team: game.away)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Column(
+                          children: [
+                            Text(
+                              scheduled
+                                  ? 'VS'
+                                  : '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}',
+                              style: text.headlineSmall?.copyWith(
+                                color: BetSafeColors.ink,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              scheduled
+                                  ? 'Away / Home'
+                                  : game.status == 'live'
+                                  ? (game.isSimulation
+                                        ? '4th quarter'
+                                        : 'Live score')
+                                  : game.status == 'final'
+                                  ? 'Final score'
+                                  : 'Score',
+                              style: const TextStyle(
+                                color: BetSafeColors.muted,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(child: _TeamColumn(team: game.home)),
+                    ],
+                  ),
+                  if (!game.isSimulation) ...[
+                    const SizedBox(height: 16),
                     Text(
-                      scheduled
-                          ? 'Away / Home'
-                          : game.status == 'live'
-                          ? (game.isSimulation ? '4th quarter' : 'Live score')
-                          : game.status == 'final'
-                          ? 'Final score'
-                          : 'Score',
+                      game.kickoffLabel,
                       style: const TextStyle(
+                        fontSize: 12,
                         color: BetSafeColors.muted,
-                        fontSize: 11,
                       ),
                     ),
+                    if (countdown != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        countdown,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: BetSafeColors.brown,
+                        ),
+                      ),
+                    ],
                   ],
-                ),
+                ],
               ),
-              Expanded(child: _TeamColumn(team: game.home)),
-            ],
-          ),
-          if (!game.isSimulation) ...[
-            const SizedBox(height: 16),
-            Text(
-              game.kickoffLabel,
-              style: const TextStyle(fontSize: 12, color: BetSafeColors.muted),
             ),
-            if (countdown != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                countdown,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: BetSafeColors.brown,
-                ),
-              ),
-            ],
-          ],
+          ),
           if (footer != null) ...[
             const SizedBox(height: 20),
             const Divider(height: 1, color: Color(0x22302419)),
