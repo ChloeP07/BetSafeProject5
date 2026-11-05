@@ -166,7 +166,7 @@ class _GamesScreenState extends State<GamesScreen> {
                 style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
-            Text('${games.length} games', style: text.bodySmall),
+            Text(gameCountLabel(games.length), style: text.bodySmall),
           ],
         ),
 
@@ -176,12 +176,16 @@ class _GamesScreenState extends State<GamesScreen> {
           runSpacing: 8,
           children: [
             ChoiceChip(
-              label: const Text('NFL schedule'),
+              label: Text(
+                'NFL schedule · ${gamesForSource(state.games, simulation: false).length}',
+              ),
               selected: !isDemo,
               onSelected: (_) => _chooseSource(false),
             ),
             ChoiceChip(
-              label: const Text('Demo games'),
+              label: Text(
+                'Demo games · ${gamesForSource(state.games, simulation: true).length}',
+              ),
               selected: isDemo,
               onSelected: (_) => _chooseSource(true),
             ),
@@ -240,6 +244,12 @@ class _GamesScreenState extends State<GamesScreen> {
           const EmptyMessage(
             title: 'No NFL games available',
             message: 'Try refreshing the schedule, or choose Demo games to try the full pick flow.',
+            icon: Icons.sports_football_outlined,
+          ),
+        if (isDemo && sourceGames.isEmpty)
+          const EmptyMessage(
+            title: 'No demo games available',
+            message: 'Restart the demo server to bring back the sample games.',
             icon: Icons.sports_football_outlined,
           ),
         if (sourceGames.isNotEmpty && games.isEmpty) ...[
