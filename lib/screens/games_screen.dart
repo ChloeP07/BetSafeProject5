@@ -63,6 +63,7 @@ class _GamesScreenState extends State<GamesScreen> {
         .where((game) => matchesTeamSearch(game, search.text))
         .toList();
     final games = searched.where(filter.matches).toList();
+    final summary = gameSummary(sourceGames, state.picks);
     final text = Theme.of(context).textTheme;
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return RefreshIndicator(
@@ -188,7 +189,10 @@ class _GamesScreenState extends State<GamesScreen> {
               Text(gameCountLabel(games.length), style: text.bodySmall),
             ],
           ),
-
+          if (summary.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(summary, style: text.bodySmall),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
