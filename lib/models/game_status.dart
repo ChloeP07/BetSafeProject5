@@ -40,6 +40,28 @@ extension GameStatusText on Game {
     return awayPoints > homePoints ? away : home;
   }
 
+  /// Why picks are closed for this game. Null while picks are open.
+  String? get closedReason {
+    if (canPick) return null;
+    return switch (status) {
+      'scheduled' => 'Kickoff has passed, so picks are closed for this game.',
+      'live' =>
+        isSimulation
+            ? 'Picks closed when the simulation started.'
+            : 'Picks closed at kickoff.',
+      'final' =>
+        isSimulation
+            ? 'This simulation has finished.'
+            : 'This game has finished.',
+      'postponed' => 'Picks are paused while this game is postponed.',
+      'delayed' => 'Picks are paused while this game is delayed.',
+      'suspended' => 'Picks are paused while this game is suspended.',
+      'canceled' => 'This game was canceled. Any stake on it is returned.',
+      'abandoned' => 'This game was abandoned. Any stake on it is returned.',
+      _ => 'Picks are paused until the feed reports this game’s status.',
+    };
+  }
+
   /// True for a finished game with two equal scores.
   bool get isTied =>
       status == 'final' &&
