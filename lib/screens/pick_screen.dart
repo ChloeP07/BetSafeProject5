@@ -54,7 +54,27 @@ class _PickScreenState extends State<PickScreen> {
     builder: (context, _) {
       final api = widget.api;
       final state = api.state!;
-      final game = state.games.firstWhere((item) => item.id == widget.gameId);
+      final game = state.gameById(widget.gameId);
+      if (game == null) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Make your pick')),
+          body: SafeArea(
+            child: PageBody(
+              children: [
+                const EmptyMessage(
+                  title: 'This game is no longer available',
+                  message: 'It has dropped off the schedule, so there is nothing to pick here.',
+                  icon: Icons.event_busy,
+                ),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Back to games'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
       final text = Theme.of(context).textTheme;
       final canAfford = stake <= state.coins && stake <= state.dailyRemaining;
       final locked = api.busy || !game.canPick;
