@@ -16,23 +16,24 @@ void main() {
     expect(find.text('500 of 800 coins left to stake today'), findsOneWidget);
   });
 
-  testWidgets('open tickets stay neutral, since green means selection or wins', (
-    tester,
-  ) async {
-    await pumpApp(
-      tester,
-      stateJson(
-        games: [
-          demoGameJson(id: 'demo-1'),
-          demoGameJson(id: 'demo-2'),
-          demoGameJson(id: 'demo-3'),
-        ],
-      ),
-    );
-    final tickets = tester.widgetList<MatchTicket>(find.byType(MatchTicket));
-    expect(tickets, hasLength(3));
-    expect(tickets.map((ticket) => ticket.color).toSet(), {Colors.white});
-  });
+  testWidgets(
+    'open tickets stay neutral, since green means selection or wins',
+    (tester) async {
+      await pumpApp(
+        tester,
+        stateJson(
+          games: [
+            demoGameJson(id: 'demo-1'),
+            demoGameJson(id: 'demo-2'),
+            demoGameJson(id: 'demo-3'),
+          ],
+        ),
+      );
+      final tickets = tester.widgetList<MatchTicket>(find.byType(MatchTicket));
+      expect(tickets, hasLength(3));
+      expect(tickets.map((ticket) => ticket.color).toSet(), {Colors.white});
+    },
+  );
 
   testWidgets('the list shows a heading for each kind of game', (tester) async {
     final kickoff = DateTime.now().add(const Duration(days: 1));
@@ -102,6 +103,56 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(MatchTicket), findsOneWidget);
       expect(find.text('All · 1'), findsOneWidget);
+    });
+  });
+
+  group('pull to refresh', () {
+    testWidgets('asks the server for new data', (tester) async {
+      var gets = 0;
+      await pumpApp(tester, stateJson(), onRequest: (_) => gets++);
+      expect(gets, 1);
+      // The drag needed scales with screen height, and this test screen is tall.
+      await tester.fling(
+        find.byType(ListView).first,
+        const Offset(0, 1800),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(gets, 2);
+    });
+
+    testWidgets('keeps the chosen filter and search', (tester) async {
+      var gets = 0;
+      await pumpApp(
+        tester,
+        stateJson(
+          games: [
+            demoGameJson(),
+            demoGameJson(id: 'demo-2'),
+          ],
+        ),
+        onRequest: (_) => gets++,
+      );
+      await tester.enterText(find.byType(TextField), 'bills');
+      await tester.tap(find.text('Open · 2'));
+      await tester.pumpAndSettle();
+      await tester.fling(
+        find.byType(ListView).first,
+        const Offset(0, 1800),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(gets, 2);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'bills',
+      );
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Open · 2'))
+            .selected,
+        isTrue,
+      );
     });
   });
 
