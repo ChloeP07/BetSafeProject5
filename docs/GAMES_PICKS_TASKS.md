@@ -19,7 +19,7 @@ Rules for every task:
 - [x] GP-04 Use the directory for team badges, and stop badges crashing on an empty team name
 - [x] GP-05 Give every game status readable text, including postponed, canceled, delayed, suspended, abandoned and unknown
 - [x] GP-06 Color status pills by meaning: open, live, waiting or finished
-- [ ] GP-07 Stop alternating mint ticket colors, because green is reserved for selection and wins
+- [x] GP-07 Stop alternating mint ticket colors, because green is reserved for selection and wins
 - [ ] GP-08 Show friendly kickoff times such as "Today · 7:20 PM" and "Sun 11/8 · 1:00 PM"
 - [ ] GP-09 Add a kickoff countdown to open NFL cards that start within 24 hours
 - [ ] GP-10 Group the list under Live now, Open for picks, Waiting for an update and Finished
