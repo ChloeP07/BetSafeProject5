@@ -1,4 +1,6 @@
 import 'demo_state.dart';
+import 'game_time.dart';
+import 'nfl_teams.dart';
 
 /// What a game's status means for the player, whatever the feed calls it.
 enum GameTone { open, live, waiting, finished }
@@ -27,4 +29,24 @@ extension GameStatusText on Game {
     'abandoned' => 'Abandoned',
     _ => 'Status unknown',
   };
+
+  /// One sentence-style summary of the card for screen readers.
+  String get matchupDescription {
+    final parts = [
+      '$away at $home.',
+      '${statusLabel.replaceAll(' · ', ', ')}.',
+    ];
+    if (status != 'scheduled' && (awayScore != null || homeScore != null)) {
+      parts.add(
+        '${teamShortName(away)} ${awayScore ?? 'no score'}, '
+        '${teamShortName(home)} ${homeScore ?? 'no score'}.',
+      );
+    }
+    if (!isSimulation && kickoff != null) {
+      parts.add(
+        'Kickoff ${friendlyKickoff(kickoff!).replaceAll(' · ', ' at ')}.',
+      );
+    }
+    return parts.join(' ');
+  }
 }
