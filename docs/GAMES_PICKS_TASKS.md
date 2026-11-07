@@ -72,7 +72,7 @@ Rules for every task:
 - [x] GP-51 Add a confirmation sheet with team, stake and balance before locking in
 - [x] GP-52 Show progress inside the Lock in button and guard against double taps
 - [x] GP-53 Turn known server errors into friendly messages with a next step
-- [ ] GP-54 Clear an old submission error when the player changes team or stake
+- [x] GP-54 Clear an old submission error when the player changes team or stake
 - [ ] GP-55 Warn about stale NFL data and block NFL submissions until a refresh succeeds
 - [ ] GP-56 Confirm a locked pick with a message such as "Pick locked: Bills · 100 coins"
 - [ ] GP-57 Explain on the Games screen when the daily limit is reached or coins have run out
