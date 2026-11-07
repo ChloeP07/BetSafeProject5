@@ -14,6 +14,10 @@ enum PickBlock {
   /// A pick for this game already exists.
   alreadyPicked,
 
+  /// The NFL data is stale or failed to load, so the server would turn down
+  /// a pick for a real game until a refresh succeeds.
+  staleData,
+
   /// No stake fits the balance and what is left of today's limit.
   noAffordableStake,
 
@@ -117,6 +121,7 @@ String? stakeProblemMessage(
 String? lockInHint(PickBlock? block) => switch (block) {
   null || PickBlock.alreadyPicked => null,
   PickBlock.closed => 'Picks are closed for this game.',
+  PickBlock.staleData => 'Refresh the NFL data to continue.',
   PickBlock.noAffordableStake => 'No stake fits right now.',
   PickBlock.noTeam => 'Choose a team to continue.',
   PickBlock.noStake => 'Choose a stake to continue.',
@@ -132,9 +137,11 @@ PickBlock? pickBlock({
   required int? stake,
   required int coins,
   required int dailyRemaining,
+  bool nflDataStale = false,
 }) {
   if (picked) return PickBlock.alreadyPicked;
   if (!game.canPick) return PickBlock.closed;
+  if (nflDataStale && !game.isSimulation) return PickBlock.staleData;
   final anyAffordable = stakeOptions.any(
     (value) =>
         canAffordStake(value, coins: coins, dailyRemaining: dailyRemaining),
