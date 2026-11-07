@@ -117,9 +117,11 @@ class _GamesScreenState extends State<GamesScreen> {
                   children: [
                     Icon(Icons.toll, size: 18, color: BetSafeColors.green),
                     SizedBox(width: 8),
-                    Text(
-                      'Demo balance',
-                      style: TextStyle(color: BetSafeColors.muted),
+                    Expanded(
+                      child: Text(
+                        'Demo balance',
+                        style: TextStyle(color: BetSafeColors.muted),
+                      ),
                     ),
                   ],
                 ),
