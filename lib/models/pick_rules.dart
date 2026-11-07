@@ -37,6 +37,29 @@ bool canAffordStake(
   required int dailyRemaining,
 }) => stake <= coins && stake <= dailyRemaining;
 
+/// The stake that fits when no other choice is made.
+const defaultStake = 100;
+
+/// The stake to use: [chosen] while it fits, otherwise [defaultStake] if it
+/// fits, otherwise the largest stake that fits. Null when no stake fits.
+///
+/// Running this on every refresh keeps the choice valid when the balance or
+/// today's limit changes.
+int? validStake(
+  int? chosen, {
+  required int coins,
+  required int dailyRemaining,
+}) {
+  bool fits(int value) =>
+      canAffordStake(value, coins: coins, dailyRemaining: dailyRemaining);
+  if (chosen != null && stakeOptions.contains(chosen) && fits(chosen)) {
+    return chosen;
+  }
+  if (fits(defaultStake)) return defaultStake;
+  final allowed = stakeOptions.where(fits);
+  return allowed.isEmpty ? null : allowed.last;
+}
+
 /// Explains why some stakes are unavailable, or null when every stake fits.
 /// Names whichever of the balance and today's limit is lower.
 String? stakeCaption({required int coins, required int dailyRemaining}) {
