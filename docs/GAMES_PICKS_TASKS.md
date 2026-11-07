@@ -66,7 +66,7 @@ Rules for every task:
 - [x] GP-45 Add a daily-limit progress bar to the pick screen
 - [x] GP-46 Add a daily-limit progress bar to the wallet panel on Games
 - [x] GP-47 Preview the balance after the pick
-- [ ] GP-48 Animate the payout figure when the stake changes, respecting reduced motion
+- [x] GP-48 Animate the payout figure when the stake changes, respecting reduced motion
 - [ ] GP-49 Separate validation messages for low balance, daily limit and no affordable stake
 - [ ] GP-50 Add a helper line under the disabled Lock in button, such as "Choose a team to continue"
 - [ ] GP-51 Add a confirmation sheet with team, stake and balance before locking in
