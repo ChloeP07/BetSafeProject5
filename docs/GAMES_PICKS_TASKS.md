@@ -70,7 +70,7 @@ Rules for every task:
 - [x] GP-49 Separate validation messages for low balance, daily limit and no affordable stake
 - [x] GP-50 Add a helper line under the disabled Lock in button, such as "Choose a team to continue"
 - [x] GP-51 Add a confirmation sheet with team, stake and balance before locking in
-- [ ] GP-52 Show progress inside the Lock in button and guard against double taps
+- [x] GP-52 Show progress inside the Lock in button and guard against double taps
 - [ ] GP-53 Turn known server errors into friendly messages with a next step
 - [ ] GP-54 Clear an old submission error when the player changes team or stake
 - [ ] GP-55 Warn about stale NFL data and block NFL submissions until a refresh succeeds
