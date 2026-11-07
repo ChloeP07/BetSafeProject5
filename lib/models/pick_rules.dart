@@ -73,6 +73,46 @@ String? stakeCaption({required int coins, required int dailyRemaining}) {
       : 'Stakes over the $dailyRemaining coins left in today’s limit are unavailable.';
 }
 
+/// Explains that no stake fits, naming the balance or today's limit, or null
+/// when at least one stake fits.
+String? noStakeMessage({required int coins, required int dailyRemaining}) {
+  final smallest = stakeOptions.first;
+  if (canAffordStake(smallest, coins: coins, dailyRemaining: dailyRemaining)) {
+    return null;
+  }
+  if (coins < smallest && coins <= dailyRemaining) {
+    return 'You have $coins virtual coins, less than the smallest '
+        '$smallest-coin stake. Winning picks return coins when their games '
+        'finish.';
+  }
+  final used = dailyRemaining <= 0
+      ? 'You’ve used all of today’s stake limit.'
+      : 'Only $dailyRemaining coins are left in today’s stake limit, less '
+            'than the smallest $smallest-coin stake.';
+  return '$used You can pick again after it resets at midnight UTC.';
+}
+
+/// A message for a stake problem, or null when [block] is not about the
+/// stake.
+String? stakeProblemMessage(
+  PickBlock? block, {
+  required int? stake,
+  required int coins,
+  required int dailyRemaining,
+}) => switch (block) {
+  PickBlock.lowBalance =>
+    'A $stake-coin stake is more than your $coins-coin balance. '
+        'Choose a smaller stake.',
+  PickBlock.dailyLimit =>
+    'A $stake-coin stake is more than the $dailyRemaining coins left in '
+        'today’s limit. Choose a smaller stake.',
+  PickBlock.noAffordableStake => noStakeMessage(
+    coins: coins,
+    dailyRemaining: dailyRemaining,
+  ),
+  _ => null,
+};
+
 /// The first reason a pick is blocked, or null when it can be sent.
 PickBlock? pickBlock({
   required Game game,
