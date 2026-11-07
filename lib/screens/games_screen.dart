@@ -7,6 +7,7 @@ import '../models/game_time.dart';
 import '../models/nfl_teams.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/daily_limit_bar.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 import 'pick_screen.dart';
@@ -130,25 +131,9 @@ class _GamesScreenState extends State<GamesScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.shield_outlined,
-                      size: 16,
-                      color: BetSafeColors.green,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${state.dailyRemaining} of ${state.dailyLimit} coins left to stake today',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: BetSafeColors.muted,
-                        ),
-                      ),
-                    ),
-                  ],
+                DailyLimitBar(
+                  remaining: state.dailyRemaining,
+                  limit: state.dailyLimit,
                 ),
               ],
             ),
