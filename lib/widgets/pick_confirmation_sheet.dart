@@ -37,6 +37,14 @@ class PickConfirmationSheet extends StatelessWidget {
   final String team;
   final int stake, coins;
 
+  /// Closes the sheet once. A quick second tap finds it already closing and
+  /// does nothing, so it can never close the pick screen behind it.
+  static void _close(BuildContext context, bool confirmed) {
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+      Navigator.of(context).pop(confirmed);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -115,7 +123,7 @@ class PickConfirmationSheet extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => _close(context, true),
                 style: FilledButton.styleFrom(
                   backgroundColor: BetSafeColors.green,
                   foregroundColor: Colors.white,
@@ -124,7 +132,7 @@ class PickConfirmationSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => _close(context, false),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: BetSafeColors.brown,
                   side: const BorderSide(color: BetSafeColors.brown),
