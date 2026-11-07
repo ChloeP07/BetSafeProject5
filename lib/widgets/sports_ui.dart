@@ -205,38 +205,49 @@ class MatchTicket extends StatelessWidget {
                           onTap: _tapFor(game.away),
                         ),
                       ),
+                      // At large text sizes a score such as "14 : 10" can be
+                      // wider than the ticket. It shrinks to a third of the
+                      // row instead of pushing the teams off the edge.
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Column(
-                          children: [
-                            Text(
-                              showScore
-                                  ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
-                                  : 'VS',
-                              style: text.headlineSmall?.copyWith(
-                                color: BetSafeColors.ink,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            if (showScore) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                game.status == 'live'
-                                    ? (game.isSimulation
-                                          ? '4th quarter'
-                                          : 'Live score')
-                                    : game.isTied
-                                    ? 'Tied'
-                                    : game.status == 'final'
-                                    ? 'Final score'
-                                    : 'Score',
-                                style: const TextStyle(
-                                  color: BetSafeColors.muted,
-                                  fontSize: 11,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width / 3,
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Column(
+                              children: [
+                                Text(
+                                  showScore
+                                      ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
+                                      : 'VS',
+                                  style: text.headlineSmall?.copyWith(
+                                    color: BetSafeColors.ink,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ],
+                                if (showScore) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    game.status == 'live'
+                                        ? (game.isSimulation
+                                              ? '4th quarter'
+                                              : 'Live score')
+                                        : game.isTied
+                                        ? 'Tied'
+                                        : game.status == 'final'
+                                        ? 'Final score'
+                                        : 'Score',
+                                    style: const TextStyle(
+                                      color: BetSafeColors.muted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       Expanded(
