@@ -119,10 +119,12 @@ class _PickScreenState extends State<PickScreen> {
         coins: state.coins,
         dailyRemaining: state.dailyRemaining,
       );
-      final stakeTooHigh =
-          block == PickBlock.lowBalance ||
-          block == PickBlock.dailyLimit ||
-          block == PickBlock.noAffordableStake;
+      final stakeMessage = stakeProblemMessage(
+        block,
+        stake: stake,
+        coins: state.coins,
+        dailyRemaining: state.dailyRemaining,
+      );
       // A pick that arrives from elsewhere, such as a refresh, ends this form.
       if (picked && !_leaving) {
         _leaving = true;
@@ -271,11 +273,24 @@ class _PickScreenState extends State<PickScreen> {
                   ],
                 ),
               ),
-              if (stakeTooHigh)
-                const Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Text(
-                    'Choose a smaller stake. Your balance or daily limit is too low.',
+              if (stakeMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Semantics(
+                    container: true,
+                    liveRegion: true,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(stakeMessage)),
+                      ],
+                    ),
                   ),
                 ),
               if (api.error != null)
