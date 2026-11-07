@@ -82,4 +82,27 @@ void main() {
     }
     expect(find.textContaining('coins returned'), findsNothing);
   });
+
+  testWidgets('out of coins explains the balance', (tester) async {
+    await pumpPick(tester, stateJson(coins: 30));
+    expect(find.textContaining('You have 30 virtual coins'), findsOneWidget);
+    expect(find.textContaining('today’s stake limit'), findsNothing);
+  });
+
+  testWidgets('a used-up limit explains the limit', (tester) async {
+    await pumpPick(tester, stateJson(dailyStaked: 500));
+    expect(
+      find.textContaining('You’ve used all of today’s stake limit.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('virtual coins, less than'), findsNothing);
+  });
+
+  testWidgets('with a stake that fits there is no stake message', (
+    tester,
+  ) async {
+    await pumpPick(tester, stateJson(coins: 120));
+    expect(find.textContaining('Choose a smaller stake'), findsNothing);
+    expect(find.textContaining('less than the smallest'), findsNothing);
+  });
 }

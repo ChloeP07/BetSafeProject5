@@ -81,6 +81,71 @@ void main() {
     });
   });
 
+  group('noStakeMessage', () {
+    test('is null while the smallest stake fits', () {
+      expect(noStakeMessage(coins: 50, dailyRemaining: 50), isNull);
+    });
+
+    test('names the balance when coins run low', () {
+      expect(
+        noStakeMessage(coins: 30, dailyRemaining: 500),
+        'You have 30 virtual coins, less than the smallest 50-coin stake. '
+        'Winning picks return coins when their games finish.',
+      );
+    });
+
+    test('names a used-up daily limit', () {
+      expect(
+        noStakeMessage(coins: 1000, dailyRemaining: 0),
+        'You’ve used all of today’s stake limit. '
+        'You can pick again after it resets at midnight UTC.',
+      );
+    });
+
+    test('names a daily limit with too little left', () {
+      expect(
+        noStakeMessage(coins: 1000, dailyRemaining: 20),
+        'Only 20 coins are left in today’s stake limit, less than the '
+        'smallest 50-coin stake. '
+        'You can pick again after it resets at midnight UTC.',
+      );
+    });
+  });
+
+  group('stakeProblemMessage', () {
+    String? message(PickBlock? block, {int coins = 1000, int left = 500}) =>
+        stakeProblemMessage(
+          block,
+          stake: 250,
+          coins: coins,
+          dailyRemaining: left,
+        );
+
+    test('low balance, daily limit and no stake each read differently', () {
+      final balance = message(PickBlock.lowBalance, coins: 200);
+      final limit = message(PickBlock.dailyLimit, left: 200);
+      final none = message(PickBlock.noAffordableStake, coins: 20);
+      expect(
+        balance,
+        'A 250-coin stake is more than your 200-coin balance. '
+        'Choose a smaller stake.',
+      );
+      expect(
+        limit,
+        'A 250-coin stake is more than the 200 coins left in today’s limit. '
+        'Choose a smaller stake.',
+      );
+      expect(none, startsWith('You have 20 virtual coins'));
+      expect({balance, limit, none}, hasLength(3));
+    });
+
+    test('is null for problems that are not about the stake', () {
+      expect(message(null), isNull);
+      expect(message(PickBlock.noTeam), isNull);
+      expect(message(PickBlock.closed), isNull);
+    });
+  });
+
   group('pickBlock', () {
     test('is null when the pick can be sent', () {
       expect(blockFor(), isNull);
