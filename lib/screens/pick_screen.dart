@@ -111,7 +111,12 @@ class _PickScreenState extends State<PickScreen> {
     final success = await widget.api.placePick(widget.gameId, chosen, stake);
     if (!mounted) return;
     if (success) {
+      // The app-wide messenger keeps the message up on the game view.
+      final messenger = ScaffoldMessenger.of(context);
       _showGame();
+      messenger.showSnackBar(
+        SnackBar(content: Text(pickLockedMessage(chosen, stake))),
+      );
     } else {
       setState(() {
         _sending = false;
