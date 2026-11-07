@@ -140,6 +140,14 @@ Future<BetSafeApi> pumpPick(
   return api;
 }
 
+/// Taps Lock in pick and confirms on the sheet that follows.
+Future<void> lockInPick(WidgetTester tester) async {
+  await tester.tap(find.text('Lock in pick'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Confirm pick'));
+  await tester.pumpAndSettle();
+}
+
 /// Pumps one matchup card on its own.
 Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
     tester.pumpWidget(

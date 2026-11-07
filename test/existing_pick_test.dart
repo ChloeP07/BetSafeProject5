@@ -61,8 +61,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TeamOptionCard, 'Buffalo Bills'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Lock in pick'));
-    await tester.pumpAndSettle();
+    await lockInPick(tester);
     expect(find.text('Your pick: Buffalo Bills'), findsOneWidget);
     // One Back reaches the list. A second game view would still be in the way.
     await tester.pageBack();
@@ -97,8 +96,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TeamOptionCard, 'Buffalo Bills'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Lock in pick'));
-    await tester.pumpAndSettle();
+    await lockInPick(tester);
     // The form stays, and shows the server's own message.
     expect(find.byType(PickScreen), findsOneWidget);
     expect(find.text('You already picked this game.'), findsOneWidget);
