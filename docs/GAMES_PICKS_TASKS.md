@@ -78,4 +78,4 @@ Rules for every task:
 - [x] GP-57 Explain on the Games screen when the daily limit is reached or coins have run out
 - [x] GP-58 Test Games and Pick at 2× text size and 48-pixel targets, and fix what fails
 - [x] GP-59 Check dark mode contrast on Games and Pick, and fix what fails
-- [ ] GP-60 Add a full pick-flow widget test and write the handoff notes and pull request draft
+- [x] GP-60 Add a full pick-flow widget test and write the handoff notes and pull request draft
