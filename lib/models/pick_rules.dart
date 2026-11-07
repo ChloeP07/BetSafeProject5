@@ -113,6 +113,17 @@ String? stakeProblemMessage(
   _ => null,
 };
 
+/// A short line for under a disabled Lock in button, saying what to do next.
+String? lockInHint(PickBlock? block) => switch (block) {
+  null || PickBlock.alreadyPicked => null,
+  PickBlock.closed => 'Picks are closed for this game.',
+  PickBlock.noAffordableStake => 'No stake fits right now.',
+  PickBlock.noTeam => 'Choose a team to continue.',
+  PickBlock.noStake => 'Choose a stake to continue.',
+  PickBlock.lowBalance ||
+  PickBlock.dailyLimit => 'Choose a smaller stake to continue.',
+};
+
 /// The first reason a pick is blocked, or null when it can be sent.
 PickBlock? pickBlock({
   required Game game,
