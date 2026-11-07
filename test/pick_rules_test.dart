@@ -5,6 +5,7 @@ import 'support/fixtures.dart';
 
 PickBlock? blockFor({
   Map<String, dynamic>? game,
+  bool stale = false,
   bool picked = false,
   String? team = 'Buffalo Bills',
   int? stake = 100,
@@ -17,6 +18,7 @@ PickBlock? blockFor({
   stake: stake,
   coins: coins,
   dailyRemaining: dailyRemaining,
+  nflDataStale: stale,
 );
 
 void main() {
@@ -163,6 +165,10 @@ void main() {
         'No stake fits right now.',
       );
       expect(lockInHint(PickBlock.closed), 'Picks are closed for this game.');
+      expect(
+        lockInHint(PickBlock.staleData),
+        'Refresh the NFL data to continue.',
+      );
     });
 
     test('is null when nothing blocks the pick or it already exists', () {
@@ -204,6 +210,19 @@ void main() {
       expect(
         blockFor(dailyRemaining: 0, team: null),
         PickBlock.noAffordableStake,
+      );
+    });
+
+    test('stale NFL data blocks only real NFL games', () {
+      expect(blockFor(game: nflGameJson(), stale: true), PickBlock.staleData);
+      expect(blockFor(game: demoGameJson(), stale: true), isNull);
+      expect(blockFor(game: nflGameJson()), isNull);
+    });
+
+    test('a closed game is named before stale data', () {
+      expect(
+        blockFor(game: nflGameJson(status: 'live'), stale: true),
+        PickBlock.closed,
       );
     });
 
