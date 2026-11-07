@@ -305,6 +305,10 @@ class _PickScreenState extends State<PickScreen> {
                     : () => _lockIn(stake),
                 child: Text(api.busy ? 'Saving pick…' : 'Lock in pick'),
               ),
+              if (api.busy ? null : lockInHint(block) case final hint?) ...[
+                const SizedBox(height: 8),
+                Text(hint, textAlign: TextAlign.center, style: text.bodySmall),
+              ],
             ],
           ),
         ),
