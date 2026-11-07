@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../models/pick_rules.dart';
 import '../theme.dart';
 
-/// The stakes the server accepts, in coins.
-const stakeOptions = [50, 100, 250];
+export '../models/pick_rules.dart' show stakeOptions;
 
 /// One chip per stake. A null [onChanged] disables every chip.
 class StakeSelector extends StatelessWidget {
