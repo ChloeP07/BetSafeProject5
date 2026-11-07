@@ -63,7 +63,7 @@ Rules for every task:
 - [x] GP-42 Add a tested pick-rules helper that returns the reason a pick is blocked
 - [x] GP-43 Disable stake chips the player cannot afford, with a caption saying why
 - [x] GP-44 Default to the largest allowed stake when 100 is not allowed, and keep a valid choice when data refreshes
-- [ ] GP-45 Add a daily-limit progress bar to the pick screen
+- [x] GP-45 Add a daily-limit progress bar to the pick screen
 - [ ] GP-46 Add a daily-limit progress bar to the wallet panel on Games
 - [ ] GP-47 Preview the balance after the pick
 - [ ] GP-48 Animate the payout figure when the stake changes, respecting reduced motion
