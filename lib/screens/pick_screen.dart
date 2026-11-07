@@ -8,6 +8,7 @@ import '../models/nfl_teams.dart';
 import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/daily_limit_bar.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 import '../widgets/stake_selector.dart';
@@ -254,9 +255,12 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              Text(
-                '${state.dailyRemaining} coins left in today’s stake limit.',
-                style: text.bodySmall,
+              SportsPanel(
+                padding: const EdgeInsets.all(16),
+                child: DailyLimitBar(
+                  remaining: state.dailyRemaining,
+                  limit: state.dailyLimit,
+                ),
               ),
               if (stakeTooHigh)
                 const Padding(
