@@ -40,6 +40,9 @@ class _PickScreenState extends State<PickScreen> {
   /// it can never open that view twice.
   bool _leaving = false;
 
+  /// True while the confirmed pick is on its way to the server.
+  bool _sending = false;
+
   @override
   void initState() {
     super.initState();
@@ -88,12 +91,16 @@ class _PickScreenState extends State<PickScreen> {
       setState(() => _leaving = false);
       return;
     }
+    setState(() => _sending = true);
     final success = await widget.api.placePick(widget.gameId, chosen, stake);
     if (!mounted) return;
     if (success) {
       _showGame();
     } else {
-      setState(() => _leaving = false);
+      setState(() {
+        _sending = false;
+        _leaving = false;
+      });
     }
   }
 
@@ -320,10 +327,13 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: api.busy || block != null || stake == null
+                onPressed:
+                    api.busy || _leaving || block != null || stake == null
                     ? null
                     : () => _lockIn(stake),
-                child: Text(api.busy ? 'Saving pick…' : 'Lock in pick'),
+                child: _sending
+                    ? const _SavingLabel()
+                    : const Text('Lock in pick'),
               ),
               if (api.busy ? null : lockInHint(block) case final hint?) ...[
                 const SizedBox(height: 8),
@@ -334,6 +344,26 @@ class _PickScreenState extends State<PickScreen> {
         ),
       );
     },
+  );
+}
+
+/// A small spinner and "Saving pick…" for inside the Lock in button.
+class _SavingLabel extends StatelessWidget {
+  const _SavingLabel();
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      SizedBox.square(
+        dimension: 18,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: DefaultTextStyle.of(context).style.color,
+        ),
+      ),
+      const SizedBox(width: 12),
+      const Flexible(child: Text('Saving pick…')),
+    ],
   );
 }
 
