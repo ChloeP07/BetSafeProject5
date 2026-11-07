@@ -9,6 +9,7 @@ import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
+import '../widgets/stake_selector.dart';
 import '../widgets/team_option_card.dart';
 import 'game_screen.dart';
 
@@ -185,26 +186,11 @@ class _PickScreenState extends State<PickScreen> {
                 style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [50, 100, 250]
-                    .map(
-                      (value) => ChoiceChip(
-                        label: Text('$value coins'),
-                        selected: stake == value,
-                        onSelected: locked
-                            ? null
-                            : (_) => setState(() => stake = value),
-                        selectedColor: BetSafeColors.mint,
-                        labelStyle: TextStyle(
-                          color: stake == value
-                              ? BetSafeColors.green
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    )
-                    .toList(),
+              StakeSelector(
+                selected: stake,
+                onChanged: locked
+                    ? null
+                    : (value) => setState(() => stake = value),
               ),
               const SizedBox(height: 20),
               SportsPanel(
