@@ -24,7 +24,10 @@ class PickScreen extends StatefulWidget {
 
 class _PickScreenState extends State<PickScreen> {
   String? team;
-  int stake = 100;
+
+  /// The stake the player tapped. The screen uses it while it fits the
+  /// balance and today's limit, and falls back to a stake that does.
+  int? _chosenStake;
 
   /// Keeps the kickoff countdown current between server refreshes.
   late final Timer _ticker;
@@ -60,7 +63,7 @@ class _PickScreenState extends State<PickScreen> {
     ),
   );
 
-  Future<void> _lockIn() async {
+  Future<void> _lockIn(int stake) async {
     _leaving = true;
     final success = await widget.api.placePick(widget.gameId, team!, stake);
     if (!mounted) return;
@@ -100,6 +103,11 @@ class _PickScreenState extends State<PickScreen> {
       }
       final text = Theme.of(context).textTheme;
       final picked = state.pickFor(widget.gameId) != null;
+      final stake = validStake(
+        _chosenStake,
+        coins: state.coins,
+        dailyRemaining: state.dailyRemaining,
+      );
       final block = pickBlock(
         game: game,
         picked: picked,
@@ -202,7 +210,7 @@ class _PickScreenState extends State<PickScreen> {
                 selected: stake,
                 onChanged: locked
                     ? null
-                    : (value) => setState(() => stake = value),
+                    : (value) => setState(() => _chosenStake = value),
                 isAllowed: (value) => canAffordStake(
                   value,
                   coins: state.coins,
@@ -213,36 +221,38 @@ class _PickScreenState extends State<PickScreen> {
                   dailyRemaining: state.dailyRemaining,
                 ),
               ),
-              const SizedBox(height: 20),
-              SportsPanel(
-                color: BetSafeColors.mint,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'If your team wins',
-                      style: TextStyle(color: BetSafeColors.green),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${stake * 2} coins returned',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.green,
-                        fontWeight: FontWeight.w800,
+              if (stake != null) ...[
+                const SizedBox(height: 20),
+                SportsPanel(
+                  color: BetSafeColors.mint,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'If your team wins',
+                        style: TextStyle(color: BetSafeColors.green),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
-                      style: const TextStyle(
-                        color: BetSafeColors.muted,
-                        fontSize: 12,
-                        height: 1.5,
+                      const SizedBox(height: 8),
+                      Text(
+                        '${stake * 2} coins returned',
+                        style: text.headlineSmall?.copyWith(
+                          color: BetSafeColors.green,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
+                        style: const TextStyle(
+                          color: BetSafeColors.muted,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 16),
               Text(
                 '${state.dailyRemaining} coins left in today’s stake limit.',
@@ -262,7 +272,9 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: api.busy || block != null ? null : _lockIn,
+                onPressed: api.busy || block != null || stake == null
+                    ? null
+                    : () => _lockIn(stake),
                 child: Text(api.busy ? 'Saving pick…' : 'Lock in pick'),
               ),
             ],
