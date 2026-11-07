@@ -1,4 +1,5 @@
 import 'demo_state.dart';
+import 'nfl_teams.dart';
 
 /// The stakes the server accepts, in coins.
 const stakeOptions = [50, 100, 250];
@@ -153,3 +154,7 @@ PickBlock? pickBlock({
   if (stake > dailyRemaining) return PickBlock.dailyLimit;
   return null;
 }
+
+/// The confirmation shown once the server has accepted a pick.
+String pickLockedMessage(String team, int stake) =>
+    'Pick locked: ${teamShortName(team)} · $stake coins';
