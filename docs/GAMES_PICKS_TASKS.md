@@ -76,6 +76,6 @@ Rules for every task:
 - [x] GP-55 Warn about stale NFL data and block NFL submissions until a refresh succeeds
 - [x] GP-56 Confirm a locked pick with a message such as "Pick locked: Bills · 100 coins"
 - [x] GP-57 Explain on the Games screen when the daily limit is reached or coins have run out
-- [ ] GP-58 Test Games and Pick at 2× text size and 48-pixel targets, and fix what fails
+- [x] GP-58 Test Games and Pick at 2× text size and 48-pixel targets, and fix what fails
 - [ ] GP-59 Check dark mode contrast on Games and Pick, and fix what fails
 - [ ] GP-60 Add a full pick-flow widget test and write the handoff notes and pull request draft
