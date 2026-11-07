@@ -28,6 +28,38 @@ void main() {
     });
   });
 
+  group('validStake', () {
+    int? valid(int? chosen, {int coins = 1000, int dailyRemaining = 500}) =>
+        validStake(chosen, coins: coins, dailyRemaining: dailyRemaining);
+
+    test('starts at 100 when it fits', () {
+      expect(valid(null), 100);
+    });
+
+    test('keeps the chosen stake while it fits', () {
+      expect(valid(250), 250);
+      expect(valid(50), 50);
+    });
+
+    test('falls back to 100 when the chosen stake no longer fits', () {
+      expect(valid(250, dailyRemaining: 200), 100);
+    });
+
+    test('uses the largest stake that fits when 100 does not', () {
+      expect(valid(null, coins: 80), 50);
+      expect(valid(250, dailyRemaining: 60), 50);
+    });
+
+    test('is null when no stake fits', () {
+      expect(valid(null, coins: 40), isNull);
+      expect(valid(100, dailyRemaining: 0), isNull);
+    });
+
+    test('ignores a stake the server does not accept', () {
+      expect(valid(75), 100);
+    });
+  });
+
   group('stakeCaption', () {
     test('is null when every stake fits', () {
       expect(stakeCaption(coins: 1000, dailyRemaining: 500), isNull);

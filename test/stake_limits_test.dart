@@ -44,4 +44,42 @@ void main() {
     }
     expect(find.textContaining('unavailable'), findsNothing);
   });
+
+  testWidgets('starts at 50 when 100 does not fit', (tester) async {
+    await pumpPick(tester, stateJson(coins: 80));
+    expect(chip(tester, 50).selected, isTrue);
+    expect(chip(tester, 100).selected, isFalse);
+    expect(find.text('100 coins returned'), findsOneWidget);
+  });
+
+  testWidgets('a refresh that lowers the limit keeps a valid stake', (
+    tester,
+  ) async {
+    final json = stateJson();
+    final api = await pumpPick(tester, json);
+    await tester.tap(find.text('250 coins'));
+    await tester.pumpAndSettle();
+    expect(chip(tester, 250).selected, isTrue);
+
+    json['account'] = {
+      'name': 'Demo player',
+      'coins': 1000,
+      'dailyLimit': 500,
+      'dailyStaked': 350,
+    };
+    await api.refresh();
+    await tester.pumpAndSettle();
+    expect(chip(tester, 250).selected, isFalse);
+    expect(chip(tester, 100).selected, isTrue);
+    expect(find.text('200 coins returned'), findsOneWidget);
+  });
+
+  testWidgets('with no stake that fits, none is selected', (tester) async {
+    await pumpPick(tester, stateJson(coins: 30));
+    for (final value in [50, 100, 250]) {
+      expect(chip(tester, value).selected, isFalse);
+      expect(chip(tester, value).onSelected, isNull);
+    }
+    expect(find.textContaining('coins returned'), findsNothing);
+  });
 }
