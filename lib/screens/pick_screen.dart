@@ -44,6 +44,17 @@ class _PickScreenState extends State<PickScreen> {
   /// True while the confirmed pick is on its way to the server.
   bool _sending = false;
 
+  /// True when the error on screen came from this screen's last submission.
+  bool _submissionFailed = false;
+
+  /// Clears a failed submission's error once the player changes their pick,
+  /// since it no longer describes what they have chosen.
+  void _clearSubmissionError() {
+    if (!_submissionFailed) return;
+    _submissionFailed = false;
+    widget.api.clearError();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +73,7 @@ class _PickScreenState extends State<PickScreen> {
   void _choose(String option) {
     final selecting = team != option;
     if (selecting) HapticFeedback.selectionClick();
+    _clearSubmissionError();
     setState(() => team = selecting ? option : null);
   }
 
@@ -92,7 +104,10 @@ class _PickScreenState extends State<PickScreen> {
       setState(() => _leaving = false);
       return;
     }
-    setState(() => _sending = true);
+    setState(() {
+      _sending = true;
+      _submissionFailed = false;
+    });
     final success = await widget.api.placePick(widget.gameId, chosen, stake);
     if (!mounted) return;
     if (success) {
@@ -101,6 +116,7 @@ class _PickScreenState extends State<PickScreen> {
       setState(() {
         _sending = false;
         _leaving = false;
+        _submissionFailed = true;
       });
     }
   }
@@ -243,7 +259,10 @@ class _PickScreenState extends State<PickScreen> {
                 selected: stake,
                 onChanged: locked
                     ? null
-                    : (value) => setState(() => _chosenStake = value),
+                    : (value) {
+                        _clearSubmissionError();
+                        setState(() => _chosenStake = value);
+                      },
                 isAllowed: (value) => canAffordStake(
                   value,
                   coins: state.coins,
