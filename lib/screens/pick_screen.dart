@@ -10,6 +10,7 @@ import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/balance_preview.dart';
 import '../widgets/daily_limit_bar.dart';
+import '../widgets/payout_figure.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 import '../widgets/stake_selector.dart';
@@ -235,8 +236,8 @@ class _PickScreenState extends State<PickScreen> {
                         style: TextStyle(color: BetSafeColors.green),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        '${stake * 2} coins returned',
+                      PayoutFigure(
+                        coins: stake * 2,
                         style: text.headlineSmall?.copyWith(
                           color: BetSafeColors.green,
                           fontWeight: FontWeight.w800,
