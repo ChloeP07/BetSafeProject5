@@ -59,7 +59,7 @@ Rules for every task:
 
 ## Day 3: stake controls and validation feedback
 
-- [ ] GP-41 Extract the stake options and chips into a tested StakeSelector widget
+- [x] GP-41 Extract the stake options and chips into a tested StakeSelector widget
 - [ ] GP-42 Add a tested pick-rules helper that returns the reason a pick is blocked
 - [ ] GP-43 Disable stake chips the player cannot afford, with a caption saying why
 - [ ] GP-44 Default to the largest allowed stake when 100 is not allowed, and keep a valid choice when data refreshes
