@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
+import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
@@ -98,8 +99,19 @@ class _PickScreenState extends State<PickScreen> {
         );
       }
       final text = Theme.of(context).textTheme;
-      final canAfford = stake <= state.coins && stake <= state.dailyRemaining;
       final picked = state.pickFor(widget.gameId) != null;
+      final block = pickBlock(
+        game: game,
+        picked: picked,
+        team: team,
+        stake: stake,
+        coins: state.coins,
+        dailyRemaining: state.dailyRemaining,
+      );
+      final stakeTooHigh =
+          block == PickBlock.lowBalance ||
+          block == PickBlock.dailyLimit ||
+          block == PickBlock.noAffordableStake;
       // A pick that arrives from elsewhere, such as a refresh, ends this form.
       if (picked && !_leaving) {
         _leaving = true;
@@ -227,7 +239,7 @@ class _PickScreenState extends State<PickScreen> {
                 '${state.dailyRemaining} coins left in today’s stake limit.',
                 style: text.bodySmall,
               ),
-              if (!canAfford)
+              if (stakeTooHigh)
                 const Padding(
                   padding: EdgeInsets.only(top: 16),
                   child: Text(
@@ -241,9 +253,7 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: locked || team == null || !canAfford
-                    ? null
-                    : _lockIn,
+                onPressed: api.busy || block != null ? null : _lockIn,
                 child: Text(api.busy ? 'Saving pick…' : 'Lock in pick'),
               ),
             ],
