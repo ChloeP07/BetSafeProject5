@@ -25,6 +25,9 @@ class StakeSelector extends StatelessWidget {
   /// Says why some stakes are disabled.
   final String? caption;
 
+  bool _enabled(int value) =>
+      onChanged != null && (isAllowed?.call(value) ?? true);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -40,15 +43,17 @@ class StakeSelector extends StatelessWidget {
               ChoiceChip(
                 label: Text('$value coins'),
                 selected: selected == value,
-                onSelected:
-                    onChanged == null || !(isAllowed?.call(value) ?? true)
-                    ? null
-                    : (_) => onChanged!(value),
+                onSelected: _enabled(value) ? (_) => onChanged!(value) : null,
                 selectedColor: BetSafeColors.mint,
                 // The default check is light in dark mode and vanishes on mint.
                 checkmarkColor: BetSafeColors.green,
+                // A set color would otherwise show a disabled chip as enabled.
                 labelStyle: TextStyle(
-                  color: selected == value ? BetSafeColors.green : onSurface,
+                  color: selected == value
+                      ? BetSafeColors.green
+                      : _enabled(value)
+                      ? onSurface
+                      : onSurface.withValues(alpha: .5),
                 ),
               ),
           ],
