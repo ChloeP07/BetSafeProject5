@@ -246,4 +246,11 @@ void main() {
       );
     });
   });
+
+  test('pickLockedMessage names the team and stake', () {
+    expect(
+      pickLockedMessage('Buffalo Bills', 100),
+      'Pick locked: Bills · 100 coins',
+    );
+  });
 }
