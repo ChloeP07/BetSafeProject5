@@ -68,7 +68,7 @@ Rules for every task:
 - [x] GP-47 Preview the balance after the pick
 - [x] GP-48 Animate the payout figure when the stake changes, respecting reduced motion
 - [x] GP-49 Separate validation messages for low balance, daily limit and no affordable stake
-- [ ] GP-50 Add a helper line under the disabled Lock in button, such as "Choose a team to continue"
+- [x] GP-50 Add a helper line under the disabled Lock in button, such as "Choose a team to continue"
 - [ ] GP-51 Add a confirmation sheet with team, stake and balance before locking in
 - [ ] GP-52 Show progress inside the Lock in button and guard against double taps
 - [ ] GP-53 Turn known server errors into friendly messages with a next step

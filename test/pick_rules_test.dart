@@ -146,6 +146,31 @@ void main() {
     });
   });
 
+  group('lockInHint', () {
+    test('says what to do next for each block', () {
+      expect(lockInHint(PickBlock.noTeam), 'Choose a team to continue.');
+      expect(lockInHint(PickBlock.noStake), 'Choose a stake to continue.');
+      expect(
+        lockInHint(PickBlock.lowBalance),
+        'Choose a smaller stake to continue.',
+      );
+      expect(
+        lockInHint(PickBlock.dailyLimit),
+        'Choose a smaller stake to continue.',
+      );
+      expect(
+        lockInHint(PickBlock.noAffordableStake),
+        'No stake fits right now.',
+      );
+      expect(lockInHint(PickBlock.closed), 'Picks are closed for this game.');
+    });
+
+    test('is null when nothing blocks the pick or it already exists', () {
+      expect(lockInHint(null), isNull);
+      expect(lockInHint(PickBlock.alreadyPicked), isNull);
+    });
+  });
+
   group('pickBlock', () {
     test('is null when the pick can be sent', () {
       expect(blockFor(), isNull);
