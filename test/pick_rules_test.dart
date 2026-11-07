@@ -28,6 +28,27 @@ void main() {
     });
   });
 
+  group('stakeCaption', () {
+    test('is null when every stake fits', () {
+      expect(stakeCaption(coins: 1000, dailyRemaining: 500), isNull);
+      expect(stakeCaption(coins: 250, dailyRemaining: 250), isNull);
+    });
+
+    test('names the balance when it is the lower of the two', () {
+      expect(
+        stakeCaption(coins: 120, dailyRemaining: 500),
+        'Stakes over your 120-coin balance are unavailable.',
+      );
+    });
+
+    test('names today’s limit when it is the lower of the two', () {
+      expect(
+        stakeCaption(coins: 1000, dailyRemaining: 150),
+        'Stakes over the 150 coins left in today’s limit are unavailable.',
+      );
+    });
+  });
+
   group('pickBlock', () {
     test('is null when the pick can be sent', () {
       expect(blockFor(), isNull);

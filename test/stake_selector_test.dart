@@ -47,6 +47,35 @@ void main() {
     }
   });
 
+  testWidgets('disables stakes that are not allowed, with a caption', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StakeSelector(
+            selected: 100,
+            onChanged: (_) {},
+            isAllowed: (value) => value <= 100,
+            caption: 'Stakes over your 120-coin balance are unavailable.',
+          ),
+        ),
+      ),
+    );
+    expect(_chip(tester, 50).onSelected, isNotNull);
+    expect(_chip(tester, 100).onSelected, isNotNull);
+    expect(_chip(tester, 250).onSelected, isNull);
+    expect(
+      find.text('Stakes over your 120-coin balance are unavailable.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows no caption when none is given', (tester) async {
+    await tester.pumpWidget(_selector(onChanged: (_) {}));
+    expect(find.textContaining('unavailable'), findsNothing);
+  });
+
   for (final brightness in Brightness.values) {
     testWidgets(
       'the check mark stays green on mint in ${brightness.name} mode',
