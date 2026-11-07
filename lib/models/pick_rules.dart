@@ -37,6 +37,19 @@ bool canAffordStake(
   required int dailyRemaining,
 }) => stake <= coins && stake <= dailyRemaining;
 
+/// Explains why some stakes are unavailable, or null when every stake fits.
+/// Names whichever of the balance and today's limit is lower.
+String? stakeCaption({required int coins, required int dailyRemaining}) {
+  final allFit = stakeOptions.every(
+    (value) =>
+        canAffordStake(value, coins: coins, dailyRemaining: dailyRemaining),
+  );
+  if (allFit) return null;
+  return coins <= dailyRemaining
+      ? 'Stakes over your $coins-coin balance are unavailable.'
+      : 'Stakes over the $dailyRemaining coins left in today’s limit are unavailable.';
+}
+
 /// The first reason a pick is blocked, or null when it can be sent.
 PickBlock? pickBlock({
   required Game game,

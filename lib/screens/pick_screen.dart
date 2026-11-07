@@ -203,6 +203,15 @@ class _PickScreenState extends State<PickScreen> {
                 onChanged: locked
                     ? null
                     : (value) => setState(() => stake = value),
+                isAllowed: (value) => canAffordStake(
+                  value,
+                  coins: state.coins,
+                  dailyRemaining: state.dailyRemaining,
+                ),
+                caption: stakeCaption(
+                  coins: state.coins,
+                  dailyRemaining: state.dailyRemaining,
+                ),
               ),
               const SizedBox(height: 20),
               SportsPanel(
