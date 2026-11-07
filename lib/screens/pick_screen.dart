@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
+import '../models/pick_errors.dart';
 import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -322,7 +323,7 @@ class _PickScreenState extends State<PickScreen> {
                 ),
               if (api.error != null)
                 ServerError(
-                  message: api.error!,
+                  message: friendlyPickError(api.error!),
                   onRetry: api.busy ? null : () => api.refresh(),
                 ),
               const SizedBox(height: 24),

@@ -97,9 +97,14 @@ void main() {
     await tester.tap(find.widgetWithText(TeamOptionCard, 'Buffalo Bills'));
     await tester.pumpAndSettle();
     await lockInPick(tester);
-    // The form stays, and shows the server's own message.
+    // The form stays, and explains the server's message with a next step.
     expect(find.byType(PickScreen), findsOneWidget);
-    expect(find.text('You already picked this game.'), findsOneWidget);
+    expect(
+      find.text(
+        'You already picked this game. Tap Try again to see your pick.',
+      ),
+      findsOneWidget,
+    );
 
     json['picks'] = [pickJson()];
     await tester.tap(find.text('Try again'));
