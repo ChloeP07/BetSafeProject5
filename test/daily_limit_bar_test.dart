@@ -60,4 +60,13 @@ void main() {
     expect(barValue(tester), closeTo(.3, .001));
     expect(find.text('350 of 500 coins left to stake today'), findsOneWidget);
   });
+
+  testWidgets('the Games wallet panel shows the bar for today’s limit', (
+    tester,
+  ) async {
+    await pumpApp(tester, stateJson(dailyLimit: 800, dailyStaked: 200));
+    expect(find.byType(DailyLimitBar), findsOneWidget);
+    expect(barValue(tester), closeTo(.25, .001));
+    expect(find.text('600 of 800 coins left to stake today'), findsOneWidget);
+  });
 }
