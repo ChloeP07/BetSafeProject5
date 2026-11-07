@@ -162,6 +162,7 @@ class _PickScreenState extends State<PickScreen> {
         stake: stake,
         coins: state.coins,
         dailyRemaining: state.dailyRemaining,
+        nflDataStale: state.nfl.hasProblem,
       );
       final stakeMessage = stakeProblemMessage(
         block,
@@ -194,6 +195,9 @@ class _PickScreenState extends State<PickScreen> {
                   reason: reason,
                   onBack: () => Navigator.of(context).pop(),
                 ),
+              ] else if (block == PickBlock.staleData) ...[
+                const SizedBox(height: 16),
+                _StaleDataNotice(onRefresh: api.busy ? null : api.refresh),
               ],
               const SizedBox(height: 28),
               Text(
@@ -384,6 +388,47 @@ class _SavingLabel extends StatelessWidget {
       const SizedBox(width: 12),
       const Flexible(child: Text('Saving pick…')),
     ],
+  );
+}
+
+/// Says that NFL picks wait for fresh data, and offers a refresh.
+class _StaleDataNotice extends StatelessWidget {
+  const _StaleDataNotice({required this.onRefresh});
+  final VoidCallback? onRefresh;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    liveRegion: true,
+    child: SportsPanel(
+      color: BetSafeColors.clay,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.cloud_off, size: 18, color: BetSafeColors.brown),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'The NFL data may be out of date, so NFL picks are paused '
+                  'until a refresh works.',
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: onRefresh,
+            style: TextButton.styleFrom(
+              foregroundColor: BetSafeColors.brown,
+              minimumSize: const Size(48, 48),
+            ),
+            child: const Text('Refresh NFL data'),
+          ),
+        ],
+      ),
+    ),
   );
 }
 
