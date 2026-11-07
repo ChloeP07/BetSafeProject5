@@ -18,7 +18,6 @@ Future<bool> showPickConfirmation(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    showDragHandle: true,
     backgroundColor: BetSafeColors.cream,
     builder: (_) =>
         PickConfirmationSheet(team: team, stake: stake, coins: coins),
@@ -65,6 +64,20 @@ class PickConfirmationSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Drawn here because the theme's handle is light in dark mode
+              // and fades into the cream sheet.
+              Center(
+                child: Container(
+                  key: const ValueKey('sheet-handle'),
+                  width: 32,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 22),
+                  decoration: BoxDecoration(
+                    color: BetSafeColors.muted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               Semantics(
                 header: true,
                 child: Text(
