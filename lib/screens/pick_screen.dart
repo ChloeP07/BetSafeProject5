@@ -8,6 +8,7 @@ import '../models/nfl_teams.dart';
 import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/balance_preview.dart';
 import '../widgets/daily_limit_bar.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
@@ -257,9 +258,16 @@ class _PickScreenState extends State<PickScreen> {
               const SizedBox(height: 16),
               SportsPanel(
                 padding: const EdgeInsets.all(16),
-                child: DailyLimitBar(
-                  remaining: state.dailyRemaining,
-                  limit: state.dailyLimit,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BalancePreview(coins: state.coins, stake: stake),
+                    const SizedBox(height: 12),
+                    DailyLimitBar(
+                      remaining: state.dailyRemaining,
+                      limit: state.dailyLimit,
+                    ),
+                  ],
                 ),
               ),
               if (stakeTooHigh)
