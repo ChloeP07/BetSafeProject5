@@ -11,6 +11,7 @@ import '../theme.dart';
 import '../widgets/balance_preview.dart';
 import '../widgets/daily_limit_bar.dart';
 import '../widgets/payout_figure.dart';
+import '../widgets/pick_confirmation_sheet.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 import '../widgets/stake_selector.dart';
@@ -66,14 +67,33 @@ class _PickScreenState extends State<PickScreen> {
     ),
   );
 
+  /// Asks for confirmation, then sends the pick.
+  ///
+  /// [_leaving] stays set from the first tap until the pick fails or the
+  /// player goes back, so a pick arriving by refresh while the sheet is open
+  /// cannot open the game view a second time.
   Future<void> _lockIn(int stake) async {
+    if (_leaving) return;
     _leaving = true;
-    final success = await widget.api.placePick(widget.gameId, team!, stake);
+    final chosen = team!;
+    final confirmed = await showPickConfirmation(
+      context,
+      team: chosen,
+      stake: stake,
+      coins: widget.api.state!.coins,
+    );
+    if (!mounted) return;
+    if (!confirmed) {
+      // A pick that arrived meanwhile is picked up by the next build.
+      setState(() => _leaving = false);
+      return;
+    }
+    final success = await widget.api.placePick(widget.gameId, chosen, stake);
     if (!mounted) return;
     if (success) {
       _showGame();
     } else {
-      _leaving = false;
+      setState(() => _leaving = false);
     }
   }
 
