@@ -15,7 +15,30 @@ class GameScreen extends StatelessWidget {
     builder: (context, _) {
       final game = api.state!.games.firstWhere((item) => item.id == gameId);
       final pick = api.state!.pickFor(gameId);
-      final text = Theme.of(context).textTheme;
+      final text = Theme.of(context).textTheme; 
+      final pickStatus = pick?.status ?? 'none';
+
+      final statusLabel = switch (pickStatus) {
+        'won' => 'Won',
+        'lost' => 'Lost',
+        'refunded' => 'Refunded',
+        'pending' => 'Pending',
+        _ => 'No pick',
+      };
+      
+      final statusColor = switch (pickStatus) {
+        'won' => BetSafeColors.green,
+        'lost' => BetSafeColors.clay,
+        'refunded' => BetSafeColors.muted,
+        _ => BetSafeColors.ink,
+      };
+      
+      final statusIcon = switch (pickStatus) {
+        'won' => Icons.emoji_events_outlined,
+        'lost' => Icons.cancel_outlined,
+        'refunded' => Icons.replay_outlined,
+        _ => Icons.schedule_outlined,
+      };
       final finalGame =
           game.status == 'final' || (pick != null && pick.status != 'pending');
       return Scaffold(
@@ -35,23 +58,60 @@ class GameScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      
                       Row(
                         children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            color: BetSafeColors.green,
+                          Icon(
+                            pick.status == 'won'
+                                ? Icons.emoji_events_outlined
+                                : pick.status == 'lost'
+                                    ? Icons.cancel_outlined
+                                    : pick.status == 'refunded'
+                                        ? Icons.currency_exchange
+                                        : Icons.schedule,
+                            color: pick.status == 'won'
+                                ? BetSafeColors.green
+                                : pick.status == 'lost'
+                                    ? BetSafeColors.clay
+                                    : BetSafeColors.ink,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              'Your pick: ${pick.team}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Your pick: ${pick.team}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  pick.status == 'won'
+                                      ? 'WINNING PICK'
+                                      : pick.status == 'lost'
+                                          ? 'LOSING PICK'
+                                          : pick.status == 'refunded'
+                                              ? 'STAKE REFUNDED'
+                                              : 'PICK PENDING',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1,
+                                    color: pick.status == 'won'
+                                        ? BetSafeColors.green
+                                        : pick.status == 'lost'
+                                            ? BetSafeColors.clay
+                                            : BetSafeColors.muted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 12),
                       Text(
                         '${pick.stake} virtual coins staked',
