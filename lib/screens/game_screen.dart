@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../services/betsafe_api.dart';
@@ -7,40 +8,21 @@ import '../widgets/sports_ui.dart';
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key, required this.api, required this.gameId});
+
   final BetSafeApi api;
   final String gameId;
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
     builder: (context, _) {
       final game = api.state!.games.firstWhere((item) => item.id == gameId);
       final pick = api.state!.pickFor(gameId);
-      final text = Theme.of(context).textTheme; 
-      final pickStatus = pick?.status ?? 'none';
+      final text = Theme.of(context).textTheme;
 
-      final statusLabel = switch (pickStatus) {
-        'won' => 'Won',
-        'lost' => 'Lost',
-        'refunded' => 'Refunded',
-        'pending' => 'Pending',
-        _ => 'No pick',
-      };
-      
-      final statusColor = switch (pickStatus) {
-        'won' => BetSafeColors.green,
-        'lost' => BetSafeColors.clay,
-        'refunded' => BetSafeColors.muted,
-        _ => BetSafeColors.ink,
-      };
-      
-      final statusIcon = switch (pickStatus) {
-        'won' => Icons.emoji_events_outlined,
-        'lost' => Icons.cancel_outlined,
-        'refunded' => Icons.replay_outlined,
-        _ => Icons.schedule_outlined,
-      };
       final finalGame =
           game.status == 'final' || (pick != null && pick.status != 'pending');
+
       return Scaffold(
         appBar: AppBar(
           title: Text(finalGame ? 'Final whistle' : 'Game progress'),
@@ -50,6 +32,7 @@ class GameScreen extends StatelessWidget {
             children: [
               MatchTicket(game: game, color: BetSafeColors.clay),
               const SizedBox(height: 24),
+
               if (pick != null) ...[
                 SportsPanel(
                   color: pick.status == 'lost'
@@ -58,7 +41,6 @@ class GameScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      
                       Row(
                         children: [
                           Icon(
@@ -113,18 +95,22 @@ class GameScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 12),
+
                       Text(
                         '${pick.stake} virtual coins staked',
-                        style: const TextStyle(color: BetSafeColors.muted),
+                        style: const TextStyle(
+                          color: BetSafeColors.muted,
+                        ),
                       ),
+
                       if (finalGame) ...[
                         const SizedBox(height: 24),
                         Text(
                           pick.status == 'refunded'
                               ? 'Your stake was returned.'
                               : pick.status == 'won'
-                              ? 'You called it!'
-                              : 'Next game, new call.',
+                                  ? 'You called it!'
+                                  : 'Next game, new call.',
                           style: text.headlineSmall?.copyWith(
                             color: BetSafeColors.ink,
                             fontWeight: FontWeight.w800,
@@ -135,8 +121,8 @@ class GameScreen extends StatelessWidget {
                           pick.status == 'refunded'
                               ? '${pick.payout} coins refunded for a tie or canceled game.'
                               : pick.status == 'won'
-                              ? '${pick.payout} coins returned. You earned a team collectible—find it in Collection.'
-                              : 'Your stake was spent. Only virtual coins were at play.',
+                                  ? '${pick.payout} coins returned. You earned a team collectible—find it in Collection.'
+                                  : 'Your stake was spent. Only virtual coins were at play.',
                           style: const TextStyle(height: 1.5),
                         ),
                       ],
@@ -144,48 +130,67 @@ class GameScreen extends StatelessWidget {
                   ),
                 ),
               ],
+
               const SizedBox(height: 28),
+
               Text(
-                finalGame ? 'Every game is a new call.' : 'Your game-day view',
-                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                finalGame
+                    ? 'Every game is a new call.'
+                    : 'Your game-day view',
+                style: text.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+
               const SizedBox(height: 8),
               Text(game.label),
+
               if (api.error != null)
                 ServerError(
                   message: api.error!,
                   onRetry: api.busy ? null : () => api.refresh(),
                 ),
+
               const SizedBox(height: 24),
+
               if (!finalGame && pick != null && game.isSimulation) ...[
                 const Text(
                   'Demo controls advance a fictional game. These are not live NFL scores.',
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: api.busy ? null : () => api.advance(gameId),
+                  onPressed: api.busy
+                      ? null
+                      : () => api.advance(gameId),
                   child: Text(
                     api.busy
                         ? 'Updating…'
                         : game.status == 'scheduled'
-                        ? 'Start simulation'
-                        : 'Finish simulation',
+                            ? 'Start simulation'
+                            : 'Finish simulation',
                   ),
                 ),
               ],
+
               if (!game.isSimulation) ...[
-                Text(api.state!.nfl.description, style: text.bodySmall),
+                Text(
+                  api.state!.nfl.description,
+                  style: text.bodySmall,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'Scores update from the NFL feed. Play-by-play is not included.',
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: api.busy ? null : () => api.refresh(),
+                  onPressed: api.busy
+                      ? null
+                      : () => api.refresh(),
                   child: const Text('Refresh scores'),
                 ),
                 const SizedBox(height: 16),
               ],
+
               if (finalGame)
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -198,3 +203,4 @@ class GameScreen extends StatelessWidget {
     },
   );
 }
+
