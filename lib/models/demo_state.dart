@@ -9,6 +9,10 @@ class Game {
     required this.awayScore,
     this.source = 'simulation',
     this.kickoff,
+    this.awayAbbreviation = '',
+    this.homeAbbreviation = '',
+    this.awayLogoUrl,
+    this.homeLogoUrl,
   });
   factory Game.fromJson(Map<String, dynamic> json) => Game(
     id: json['id'] as String,
@@ -19,11 +23,16 @@ class Game {
     homeScore: json['homeScore'] as int?,
     awayScore: json['awayScore'] as int?,
     source: json['source'] as String? ?? 'simulation',
+    awayAbbreviation: json['awayAbbreviation'] as String? ?? '',
+    homeAbbreviation: json['homeAbbreviation'] as String? ?? '',
+    awayLogoUrl: json['awayLogoUrl'] as String?,
+    homeLogoUrl: json['homeLogoUrl'] as String?,
     kickoff: DateTime.tryParse(json['kickoff'] as String? ?? ''),
   );
   final String id, home, away, status, label;
   final int? homeScore, awayScore;
-  final String source;
+  final String source, awayAbbreviation, homeAbbreviation;
+  final String? awayLogoUrl, homeLogoUrl;
   final DateTime? kickoff;
   bool get isSimulation => source != 'balldontlie';
   bool get canPick =>
@@ -72,6 +81,8 @@ class Collectible {
 class DemoState {
   DemoState.fromJson(Map<String, dynamic> json)
     : nfl = NflStatus.fromJson(json['nfl'] as Map<String, dynamic>? ?? {}),
+      playerName = json['account']['name'] as String? ?? 'Player',
+      dailyLimit = json['account']['dailyLimit'] as int,
       coins = json['account']['coins'] as int,
       dailyRemaining =
           (json['account']['dailyLimit'] as int) -
@@ -86,7 +97,8 @@ class DemoState {
           .map((item) => Collectible.fromJson(item as Map<String, dynamic>))
           .toList();
   final NflStatus nfl;
-  final int coins, dailyRemaining;
+  final String playerName;
+  final int coins, dailyLimit, dailyRemaining;
   final List<Game> games;
   final List<Pick> picks;
   final List<Collectible> collection;
@@ -107,13 +119,12 @@ class NflStatus {
   final bool configured, stale;
   final DateTime? fetchedAt;
   final String? error;
-  String get description {
-    if (!configured) {
-      return 'NFL data is not configured. Add the API key to the server’s .env file.';
+  String? get description {
+    if (!configured) return 'NFL games are unavailable. Try Demo games.';
+    if (error != null || stale) {
+      return 'Scores may be out of date. Try refreshing.';
     }
-    if (error != null) return error!;
-    if (fetchedAt == null) return 'NFL schedule has not been fetched yet.';
-    final time = fetchedAt!.toLocal();
-    return 'BALLDONTLIE · fetched ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} local${stale ? ' · may be out of date' : ' · refreshes every minute'}';
+    if (fetchedAt == null) return 'Checking for NFL games…';
+    return null;
   }
 }

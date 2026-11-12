@@ -52,6 +52,15 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: Barlow
+      fonts:
+        - asset: assets/fonts/Barlow-Regular.ttf
+        - asset: assets/fonts/Barlow-SemiBold.ttf
+          weight: 600
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

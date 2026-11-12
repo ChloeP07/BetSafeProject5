@@ -7,15 +7,21 @@ import '../widgets/sports_ui.dart';
 import 'game_screen.dart';
 
 class PickScreen extends StatefulWidget {
-  const PickScreen({super.key, required this.api, required this.gameId});
+  const PickScreen({
+    super.key,
+    required this.api,
+    required this.gameId,
+    this.initialTeam,
+  });
   final BetSafeApi api;
   final String gameId;
+  final String? initialTeam;
   @override
   State<PickScreen> createState() => _PickScreenState();
 }
 
 class _PickScreenState extends State<PickScreen> {
-  String? team;
+  late String? team = widget.initialTeam;
   int stake = 100;
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -31,7 +37,7 @@ class _PickScreenState extends State<PickScreen> {
         body: SafeArea(
           child: PageBody(
             children: [
-              MatchTicket(game: game, color: BetSafeColors.clay),
+              MatchTicket(game: game),
               const SizedBox(height: 28),
               Text(
                 'Who takes the win?',
@@ -39,8 +45,6 @@ class _PickScreenState extends State<PickScreen> {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text('Choose your team. Keep it virtual.'),
               const SizedBox(height: 16),
               for (final option in [game.away, game.home])
                 Padding(
@@ -48,24 +52,30 @@ class _PickScreenState extends State<PickScreen> {
                   child: OutlinedButton(
                     onPressed: api.busy
                         ? null
-                        : () => setState(() => team = option),
+                        : () => setState(
+                            () => team = team == option ? null : option,
+                          ),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: team == option
-                          ? BetSafeColors.mint
+                          ? BetSafeColors.yellow
                           : null,
                       foregroundColor: team == option
-                          ? BetSafeColors.green
+                          ? BetSafeColors.ink
                           : null,
                       side: BorderSide(
                         color: team == option
-                            ? BetSafeColors.green
+                            ? BetSafeColors.ink
                             : Theme.of(context).colorScheme.outlineVariant,
                       ),
                       padding: const EdgeInsets.all(14),
                     ),
                     child: Row(
                       children: [
-                        TeamBadge(team: option, size: 38),
+                        TeamBadge.forGame(
+                          game,
+                          home: option == game.home,
+                          size: 38,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -101,10 +111,10 @@ class _PickScreenState extends State<PickScreen> {
                         onSelected: api.busy
                             ? null
                             : (_) => setState(() => stake = value),
-                        selectedColor: BetSafeColors.mint,
+                        selectedColor: BetSafeColors.yellow,
                         labelStyle: TextStyle(
                           color: stake == value
-                              ? BetSafeColors.green
+                              ? BetSafeColors.ink
                               : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
@@ -112,40 +122,35 @@ class _PickScreenState extends State<PickScreen> {
                     .toList(),
               ),
               const SizedBox(height: 20),
-              SportsPanel(
-                color: BetSafeColors.mint,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'If your team wins',
-                      style: TextStyle(color: BetSafeColors.green),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _PickOutcome(
+                      label: 'If your team wins',
+                      amount: '+${stake * 2} coins',
+                      background: BetSafeColors.mint,
+                      foreground: BetSafeColors.green,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${stake * 2} coins returned',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.green,
-                        fontWeight: FontWeight.w800,
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _PickOutcome(
+                      label: 'If your team loses',
+                      amount: '−$stake coins',
+                      background: BetSafeColors.loss,
+                      foreground: BetSafeColors.lossInk,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
-                      style: const TextStyle(
-                        color: BetSafeColors.muted,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              if (canAfford) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Coins left after bet: ${MaterialLocalizations.of(context).formatDecimal(state.coins - stake)}',
+                  style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '${state.dailyRemaining} coins left in today’s stake limit.',
-                style: text.bodySmall,
-              ),
+              ],
               if (!canAfford)
                 const Padding(
                   padding: EdgeInsets.only(top: 16),
@@ -183,5 +188,35 @@ class _PickScreenState extends State<PickScreen> {
         ),
       );
     },
+  );
+}
+
+class _PickOutcome extends StatelessWidget {
+  const _PickOutcome({
+    required this.label,
+    required this.amount,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label, amount;
+  final Color background, foreground;
+
+  @override
+  Widget build(BuildContext context) => SportsPanel(
+    color: background,
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: foreground)),
+        const SizedBox(height: 6),
+        Text(
+          amount,
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(color: foreground, fontWeight: FontWeight.w800),
+        ),
+      ],
+    ),
   );
 }

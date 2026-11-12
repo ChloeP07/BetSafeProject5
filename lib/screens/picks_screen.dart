@@ -19,27 +19,27 @@ class PicksScreen extends StatelessWidget {
           'My picks',
           style: text.headlineLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 8),
-        const Text('Your calls. Your game-day story.'),
         const SizedBox(height: 20),
         Row(
           children: [
             StatusPill(
               '${state.picks.where((p) => p.status == 'pending').length} pending',
+              background: BetSafeColors.yellow,
+              color: BetSafeColors.ink,
             ),
             const SizedBox(width: 8),
             StatusPill(
               '${state.picks.where((p) => p.status == 'won').length} won',
-              background: BetSafeColors.clay,
-              color: BetSafeColors.brown,
+              background: BetSafeColors.soft,
+              color: BetSafeColors.ink,
             ),
           ],
         ),
         if (state.picks.isEmpty)
           const EmptyMessage(
-            title: 'Your first call is waiting.',
-            message: 'Choose a matchup in Games and stake virtual coins to get started.',
-            icon: Icons.receipt_long_outlined,
+            title: 'No picks yet',
+            message: 'Open Games and choose a team to make your first pick.',
+            icon: Icons.bookmark_border,
           ),
         const SizedBox(height: 20),
         for (final pick in state.picks.reversed) ...[
@@ -48,7 +48,7 @@ class PicksScreen extends StatelessWidget {
             color: pick.status == 'won'
                 ? BetSafeColors.mint
                 : pick.status == 'lost'
-                ? const Color(0xFFF0DFD5)
+                ? BetSafeColors.loss
                 : Colors.white,
             footer: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,18 +85,22 @@ class PicksScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     StatusPill(
                       pick.status == 'won'
-                          ? 'WIN'
+                          ? 'Won'
                           : pick.status == 'lost'
-                          ? 'LOSS'
+                          ? 'Lost'
                           : pick.status == 'refunded'
-                          ? 'REFUNDED'
-                          : 'PENDING',
+                          ? 'Refunded'
+                          : 'Pending',
                       background: pick.status == 'lost'
-                          ? BetSafeColors.clay
-                          : BetSafeColors.mint,
+                          ? BetSafeColors.loss
+                          : pick.status == 'won'
+                          ? BetSafeColors.mint
+                          : BetSafeColors.soft,
                       color: pick.status == 'lost'
-                          ? BetSafeColors.brown
-                          : BetSafeColors.green,
+                          ? BetSafeColors.lossInk
+                          : pick.status == 'won'
+                          ? BetSafeColors.green
+                          : BetSafeColors.ink,
                     ),
                   ],
                 ),
@@ -108,8 +112,8 @@ class PicksScreen extends StatelessWidget {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: BetSafeColors.darkBrown,
-                    foregroundColor: BetSafeColors.cream,
+                    backgroundColor: BetSafeColors.ink,
+                    foregroundColor: Colors.white,
                   ),
                   child: const Text('View pick'),
                 ),

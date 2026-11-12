@@ -3,48 +3,136 @@ import 'package:flutter/material.dart';
 import '../models/demo_state.dart';
 import '../theme.dart';
 
-/// Initial badges are deliberate placeholders; no unlicensed team artwork.
+String nflTeamCode(String team, [String provided = '']) {
+  if (provided.trim().isNotEmpty) return provided.trim().toUpperCase();
+  final short = team.trim().split(' ').last;
+  return _teams[short]?.$1 ??
+      short.substring(0, short.length.clamp(0, 3)).toUpperCase();
+}
+
+Color nflTeamColor(String team) =>
+    Color(_teams[team.trim().split(' ').last]?.$2 ?? 0xff373431);
+
 class TeamBadge extends StatelessWidget {
-  const TeamBadge({super.key, required this.team, this.size = 48});
+  const TeamBadge({
+    super.key,
+    required this.team,
+    this.size = 48,
+    this.code,
+    this.logoUrl,
+    this.ring = BetSafeColors.yellow,
+  });
   final String team;
   final double size;
+  final String? code, logoUrl;
+  final Color ring;
+
+  factory TeamBadge.forGame(
+    Game game, {
+    required bool home,
+    double size = 48,
+  }) => TeamBadge(
+    team: home ? game.home : game.away,
+    code: home ? game.homeAbbreviation : game.awayAbbreviation,
+    logoUrl: home ? game.homeLogoUrl : game.awayLogoUrl,
+    size: size,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final codes = {
-      'Kansas City Chiefs': 'KC',
-      'Buffalo Bills': 'BUF',
-      'Dallas Cowboys': 'DAL',
-      'Philadelphia Eagles': 'PHI',
-      'Green Bay Packers': 'GB',
-      'Chicago Bears': 'CHI',
-    };
-    return Semantics(
-      label: team,
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: BetSafeColors.cream,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: BetSafeColors.brown.withValues(alpha: .18),
-            width: 2,
-          ),
-        ),
+    final abbreviation = nflTeamCode(team, code ?? '');
+    final known = _teams[team.trim().split(' ').last]?.$1;
+    final cdnCode = known == 'WAS' ? 'wsh' : known?.toLowerCase();
+    final cdn = cdnCode == null
+        ? null
+        : 'https://a.espncdn.com/i/teamlogos/nfl/500/$cdnCode.png';
+    final provided = logoUrl?.trim();
+    final initials = ColoredBox(
+      color: nflTeamColor(team),
+      child: Center(
         child: Text(
-          codes[team] ?? team.split(' ').last.substring(0, 1),
+          abbreviation,
           textScaler: TextScaler.noScaling,
           style: TextStyle(
-            color: BetSafeColors.brown,
+            color: Colors.white,
             fontSize: size * .24,
             fontWeight: FontWeight.w900,
           ),
         ),
       ),
     );
+    Widget logo(String url, Widget Function() fallback) => Padding(
+      padding: EdgeInsets.all(size * .10),
+      child: Image.network(
+        url,
+        fit: BoxFit.contain,
+        excludeFromSemantics: true,
+        errorBuilder: (_, _, _) => fallback(),
+      ),
+    );
+    return Semantics(
+      label: team,
+      image: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: size,
+          height: size,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: ring, width: 2),
+          ),
+          child: provided != null && provided.isNotEmpty
+              ? logo(
+                  provided,
+                  () => cdn == null || provided == cdn
+                      ? initials
+                      : logo(cdn, () => initials),
+                )
+              : cdn == null
+              ? initials
+              : logo(cdn, () => initials),
+        ),
+      ),
+    );
   }
 }
+
+const _teams = {
+  'Cardinals': ('ARI', 0xff97233f),
+  'Falcons': ('ATL', 0xffa71930),
+  'Ravens': ('BAL', 0xff241773),
+  'Bills': ('BUF', 0xff00338d),
+  'Panthers': ('CAR', 0xff006b91),
+  'Bears': ('CHI', 0xff0b162a),
+  'Bengals': ('CIN', 0xffa6360a),
+  'Browns': ('CLE', 0xff311d00),
+  'Cowboys': ('DAL', 0xff003594),
+  'Broncos': ('DEN', 0xffa63c10),
+  'Lions': ('DET', 0xff006b9a),
+  'Packers': ('GB', 0xff203731),
+  'Texans': ('HOU', 0xff03202f),
+  'Colts': ('IND', 0xff002c5f),
+  'Jaguars': ('JAX', 0xff006778),
+  'Chiefs': ('KC', 0xffa8172d),
+  'Raiders': ('LV', 0xff000000),
+  'Chargers': ('LAC', 0xff006c96),
+  'Rams': ('LAR', 0xff003594),
+  'Dolphins': ('MIA', 0xff006d71),
+  'Vikings': ('MIN', 0xff4f2683),
+  'Patriots': ('NE', 0xff002244),
+  'Saints': ('NO', 0xff5c4d35),
+  'Giants': ('NYG', 0xff0b2265),
+  'Jets': ('NYJ', 0xff125740),
+  'Eagles': ('PHI', 0xff004c54),
+  'Steelers': ('PIT', 0xff3c3014),
+  '49ers': ('SF', 0xffaa0000),
+  'Seahawks': ('SEA', 0xff002244),
+  'Buccaneers': ('TB', 0xffb00018),
+  'Titans': ('TEN', 0xff0c2340),
+  'Commanders': ('WAS', 0xff5a1414),
+};
 
 class StatusPill extends StatelessWidget {
   const StatusPill(
@@ -109,64 +197,102 @@ class MatchTicket extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheduled = game.status == 'scheduled';
+    final isFinal = game.status == 'final';
+    final awayScore = game.awayScore;
+    final homeScore = game.homeScore;
+    String? result;
+    var hasWinner = false;
+    if (isFinal && awayScore != null && homeScore != null) {
+      hasWinner = awayScore != homeScore;
+      if (hasWinner) {
+        final winner = awayScore > homeScore ? game.away : game.home;
+        result = '$winner Win';
+      } else {
+        result = 'Game tied';
+      }
+    }
     final text = Theme.of(context).textTheme;
     return SportsPanel(
       color: color,
       child: Column(
         children: [
-          Row(
-            children: [
-              const Icon(Icons.sports_football, size: 16),
-              const SizedBox(width: 6),
-              const Text('NFL', style: TextStyle(fontWeight: FontWeight.w800)),
-              const Spacer(),
-              StatusPill(
-                scheduled
-                    ? (game.isSimulation ? 'Demo matchup' : 'Scheduled')
-                    : game.status == 'live'
-                    ? (game.isSimulation ? 'Simulation · live' : 'In progress')
-                    : (game.isSimulation ? 'Simulation · final' : game.status),
-              ),
-            ],
+          StatusPill(
+            switch (game.status) {
+              'scheduled' => game.isSimulation ? 'Demo matchup' : 'Scheduled',
+              'live' => game.isSimulation ? 'Simulation · live' : 'In progress',
+              'final' => game.isSimulation ? 'Simulation · Final' : 'Final',
+              _ => game.status,
+            },
+            color: BetSafeColors.muted,
+            background: BetSafeColors.soft,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _TeamColumn(team: game.away)),
+              Expanded(
+                child: _TeamColumn(badge: TeamBadge.forGame(game, home: false)),
+              ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                 child: Column(
                   children: [
                     Text(
                       scheduled
                           ? 'VS'
-                          : '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}',
+                          : '${awayScore ?? '–'} : ${homeScore ?? '–'}',
                       style: text.headlineSmall?.copyWith(
                         color: BetSafeColors.ink,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      scheduled
-                          ? 'Away / Home'
-                          : game.status == 'live'
-                          ? (game.isSimulation ? '4th quarter' : 'Live score')
-                          : game.status == 'final'
-                          ? 'Final score'
-                          : 'Score',
-                      style: const TextStyle(
-                        color: BetSafeColors.muted,
-                        fontSize: 11,
+                    if (!isFinal) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        scheduled
+                            ? 'Away / Home'
+                            : game.status == 'live'
+                            ? (game.isSimulation ? '4th quarter' : 'Live score')
+                            : 'Score',
+                        style: const TextStyle(
+                          color: BetSafeColors.muted,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-              Expanded(child: _TeamColumn(team: game.home)),
+              Expanded(
+                child: _TeamColumn(badge: TeamBadge.forGame(game, home: true)),
+              ),
             ],
           ),
+          if (result != null) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: hasWinner ? BetSafeColors.mint : BetSafeColors.soft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Text(
+                    result,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: hasWinner
+                          ? BetSafeColors.green
+                          : BetSafeColors.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           if (!game.isSimulation) ...[
             const SizedBox(height: 16),
             Text(
@@ -187,15 +313,15 @@ class MatchTicket extends StatelessWidget {
 }
 
 class _TeamColumn extends StatelessWidget {
-  const _TeamColumn({required this.team});
-  final String team;
+  const _TeamColumn({required this.badge});
+  final TeamBadge badge;
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      TeamBadge(team: team),
+      badge,
       const SizedBox(height: 10),
       Text(
-        team,
+        badge.team,
         textAlign: TextAlign.center,
         style: const TextStyle(
           fontSize: 13,
@@ -225,7 +351,7 @@ class FieldArtwork extends StatelessWidget {
               child: Icon(
                 Icons.sports_football,
                 size: 48,
-                color: BetSafeColors.clay,
+                color: BetSafeColors.soft,
               ),
             ),
           ),

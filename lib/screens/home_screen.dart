@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/betsafe_api.dart';
-import '../widgets/shared.dart';
 import '../theme.dart';
+import '../widgets/shared.dart';
 import 'games_screen.dart';
 import 'picks_screen.dart';
 import 'collection_screen.dart';
@@ -60,18 +60,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     builder: (context, _) {
       final destinations = const [
         NavigationDestination(
-          icon: Icon(Icons.sports_football_outlined),
-          selectedIcon: Icon(Icons.sports_football),
+          icon: Icon(Icons.calendar_today_outlined),
+          selectedIcon: Icon(Icons.calendar_today),
           label: 'Games',
         ),
         NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long),
+          icon: Icon(Icons.bookmark_border),
+          selectedIcon: Icon(Icons.bookmark),
           label: 'My picks',
         ),
         NavigationDestination(
-          icon: Icon(Icons.collections_bookmark_outlined),
-          selectedIcon: Icon(Icons.collections_bookmark),
+          icon: Icon(Icons.layers_outlined),
+          selectedIcon: Icon(Icons.layers),
           label: 'Collection',
         ),
       ];
@@ -90,8 +90,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       : const PageBody(
                           children: [
                             EmptyMessage(
-                              title: 'Start your demo server',
-                              message: 'Run npm start in the server folder, then tap Try again.',
+                              title: 'Can’t connect',
+                              message: 'Try again in a moment.',
                               icon: Icons.cloud_off,
                             ),
                           ],
@@ -105,25 +105,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       );
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'BETSAFE',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
-              color: Theme.of(context).brightness == Brightness.light
-                  ? BetSafeColors.brown
-                  : BetSafeColors.cream,
-            ),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Refresh from server',
-              onPressed: api.busy ? null : () => api.refresh(),
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -157,16 +138,57 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             : SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(32),
-                    child: NavigationBar(
-                      height: 72,
-                      elevation: 0,
-                      selectedIndex: destination,
-                      destinations: destinations,
-                      onDestinationSelected: (value) =>
-                          setState(() => destination = value),
+                  padding: const EdgeInsets.only(top: 8, bottom: 18),
+                  child: Center(
+                    heightFactor: 1,
+                    child: Container(
+                      width: 240,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: BetSafeColors.ink,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 16,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          for (final (index, item) in destinations.indexed)
+                            Semantics(
+                              selected: destination == index,
+                              child: IconButton(
+                                tooltip: item.label,
+                                onPressed: () =>
+                                    setState(() => destination = index),
+                                style: IconButton.styleFrom(
+                                  fixedSize: const Size.square(48),
+                                  backgroundColor: destination == index
+                                      ? BetSafeColors.yellow
+                                      : Colors.transparent,
+                                  foregroundColor: destination == index
+                                      ? BetSafeColors.ink
+                                      : Colors.white,
+                                ),
+                                icon: Badge.count(
+                                  count: api.state?.picks.length ?? 0,
+                                  isLabelVisible:
+                                      index == 1 &&
+                                      (api.state?.picks.isNotEmpty ?? false),
+                                  backgroundColor: BetSafeColors.yellow,
+                                  textColor: BetSafeColors.ink,
+                                  child: destination == index
+                                      ? item.selectedIcon
+                                      : item.icon,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

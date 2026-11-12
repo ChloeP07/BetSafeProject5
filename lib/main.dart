@@ -13,8 +13,7 @@ class BetSafeApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'BetSafe',
     debugShowCheckedModeBanner: false,
-    theme: betSafeTheme(Brightness.light),
-    darkTheme: betSafeTheme(Brightness.dark),
+    theme: betSafeTheme(),
     home: HomeScreen(api: api),
   );
 }
