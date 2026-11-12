@@ -79,14 +79,18 @@ class Collectible {
 }
 
 class DemoState {
+  // The account is read once as a typed map, so every field below is checked
+  // instead of being looked up on an untyped value.
   DemoState.fromJson(Map<String, dynamic> json)
+    : this._(json, json['account'] as Map<String, dynamic>);
+
+  DemoState._(Map<String, dynamic> json, Map<String, dynamic> account)
     : nfl = NflStatus.fromJson(json['nfl'] as Map<String, dynamic>? ?? {}),
-      playerName = json['account']['name'] as String? ?? 'Player',
-      dailyLimit = json['account']['dailyLimit'] as int,
-      coins = json['account']['coins'] as int,
+      playerName = account['name'] as String? ?? 'Player',
+      dailyLimit = account['dailyLimit'] as int,
+      coins = account['coins'] as int,
       dailyRemaining =
-          (json['account']['dailyLimit'] as int) -
-          (json['account']['dailyStaked'] as int),
+          (account['dailyLimit'] as int) - (account['dailyStaked'] as int),
       games = (json['games'] as List)
           .map((item) => Game.fromJson(item as Map<String, dynamic>))
           .toList(),

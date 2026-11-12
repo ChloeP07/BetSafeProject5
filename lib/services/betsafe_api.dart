@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -23,6 +24,10 @@ class BetSafeApi extends ChangeNotifier {
   DemoState? state;
   bool busy = false;
   String? error;
+
+  /// Shown when the server answers with something the app cannot read.
+  static const unreadableReply =
+      'The demo server sent a reply the app could not read. Try again in a moment.';
 
   Future<bool> refresh() => _request('GET', '/api/state');
   Future<bool> placePick(String gameId, String team, int stake) => _request(
@@ -63,7 +68,19 @@ class BetSafeApi extends ChangeNotifier {
       }
       state = DemoState.fromJson(data);
       return true;
-    } catch (_) {
+    } on TimeoutException {
+      error = 'The demo server took too long to answer. Check that it is running and try again.';
+      return false;
+    } on FormatException {
+      // The reply was not JSON.
+      error = unreadableReply;
+      return false;
+    } on TypeError {
+      // The reply was JSON, but with missing fields or fields of the wrong type.
+      error = unreadableReply;
+      return false;
+    } on Exception {
+      // Connection refused, no network, dropped connection and similar.
       error = 'Cannot reach the demo server. Check that it is running and try again.';
       return false;
     } finally {

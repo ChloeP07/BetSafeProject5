@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/shared.dart';
+import 'collection_screen.dart';
 import 'games_screen.dart';
 import 'picks_screen.dart';
-import 'collection_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.api});
@@ -23,14 +23,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void startRefreshTimer() {
     refreshTimer?.cancel();
     refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
-      if (api.state?.nfl.configured ?? false) api.refresh();
+      if (api.state?.nfl.configured ?? false) unawaited(api.refresh());
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      api.refresh();
+      // Not awaited on purpose: the screen updates when the reply arrives.
+      unawaited(api.refresh());
       startRefreshTimer();
     } else {
       refreshTimer?.cancel();
@@ -41,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     api = widget.api ?? BetSafeApi();
-    api.refresh();
+    unawaited(api.refresh());
     WidgetsBinding.instance.addObserver(this);
     startRefreshTimer();
   }
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
     builder: (context, _) {
-      final destinations = const [
+      const destinations = [
         NavigationDestination(
           icon: Icon(Icons.calendar_today_outlined),
           selectedIcon: Icon(Icons.calendar_today),

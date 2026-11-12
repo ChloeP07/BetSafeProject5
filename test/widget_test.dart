@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:betsafeproject5/main.dart';
 import 'package:betsafeproject5/models/demo_state.dart';
-import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
+import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -22,8 +22,8 @@ Map<String, dynamic> fixture() => {
       'awayScore': 0,
     },
   ],
-  'picks': [],
-  'collection': [],
+  'picks': <Map<String, dynamic>>[],
+  'collection': <Map<String, dynamic>>[],
 };
 
 void main() {

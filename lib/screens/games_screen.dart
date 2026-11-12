@@ -334,10 +334,8 @@ class _GameCard extends StatelessWidget {
     final kickoff = game.kickoff?.toLocal();
     final time = kickoff == null
         ? null
-        : MaterialLocalizations.of(context).formatTimeOfDay(
-            TimeOfDay.fromDateTime(kickoff),
-            alwaysUse24HourFormat: false,
-          );
+        : MaterialLocalizations.of(context)
+              .formatTimeOfDay(TimeOfDay.fromDateTime(kickoff));
     final timeParts = time?.split(' ');
     final until = kickoff?.difference(now);
     final foreground = featured ? Colors.white : _ink;
@@ -458,7 +456,7 @@ class _GameCard extends StatelessWidget {
                     children: [
                       Expanded(
                         flex: 5,
-                        child: away.badge(featured, foreground),
+                        child: away.badge(foreground, featured: featured),
                       ),
                       Expanded(
                         flex: 4,
@@ -501,7 +499,7 @@ class _GameCard extends StatelessWidget {
                       ),
                       Expanded(
                         flex: 5,
-                        child: home.badge(featured, foreground),
+                        child: home.badge(foreground, featured: featured),
                       ),
                     ],
                   ),
@@ -527,9 +525,9 @@ class _GameCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Text(
+                        child: const Text(
                           'See score',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
@@ -573,7 +571,7 @@ class _Club {
     );
   }
 
-  Widget badge(bool featured, Color foreground) => Column(
+  Widget badge(Color foreground, {required bool featured}) => Column(
     children: [
       TeamBadge(
         team: name,

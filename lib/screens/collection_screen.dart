@@ -29,7 +29,6 @@ class CollectionScreen extends StatelessWidget {
         const SizedBox(height: 20),
         for (final card in api.state!.collection) ...[
           SportsPanel(
-            color: Colors.white,
             child: Row(
               children: [
                 TeamBadge(team: card.team, size: 56),

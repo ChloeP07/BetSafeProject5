@@ -117,7 +117,7 @@ class GameScreen extends StatelessWidget {
               if (api.error != null)
                 ServerError(
                   message: api.error!,
-                  onRetry: api.busy ? null : () => api.refresh(),
+                  onRetry: api.busy ? null : api.refresh,
                 ),
 
               const SizedBox(height: 24),
@@ -143,7 +143,7 @@ class GameScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                 ],
                 OutlinedButton(
-                  onPressed: api.busy ? null : () => api.refresh(),
+                  onPressed: api.busy ? null : api.refresh,
                   child: const Text('Refresh scores'),
                 ),
                 const SizedBox(height: 16),

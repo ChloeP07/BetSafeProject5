@@ -161,7 +161,7 @@ class _PickScreenState extends State<PickScreen> {
               if (api.error != null)
                 ServerError(
                   message: api.error!,
-                  onRetry: api.busy ? null : () => api.refresh(),
+                  onRetry: api.busy ? null : api.refresh,
                 ),
               const SizedBox(height: 24),
               FilledButton(
