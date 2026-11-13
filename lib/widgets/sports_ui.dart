@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../models/demo_state.dart';
+import '../models/game_status.dart';
+import '../models/game_time.dart';
+import '../models/nfl_teams.dart';
 import '../theme.dart';
 
+/// The team's abbreviation: the server's when it sends one, then the known
+/// NFL code, then the name's initials ("?" for a blank name).
 String nflTeamCode(String team, [String provided = '']) {
   if (provided.trim().isNotEmpty) return provided.trim().toUpperCase();
   final short = team.trim().split(' ').last;
-  return _teams[short]?.$1 ??
-      short.substring(0, short.length.clamp(0, 3)).toUpperCase();
+  return _teams[short]?.$1 ?? teamCode(team);
 }
 
 Color nflTeamColor(String team) =>
@@ -61,14 +65,29 @@ class TeamBadge extends StatelessWidget {
         ),
       ),
     );
-    Widget logo(String url, Widget Function() fallback) => Padding(
-      padding: EdgeInsets.all(size * .10),
-      child: Image.network(
-        url,
-        fit: BoxFit.contain,
-        excludeFromSemantics: true,
-        errorBuilder: (_, _, _) => fallback(),
-      ),
+    // The initials sit under the logo, so they show while it loads and stay if
+    // it never does.
+    Widget logo(String url, Widget Function() fallback) => Stack(
+      fit: StackFit.expand,
+      children: [
+        initials,
+        Image.network(
+          url,
+          fit: BoxFit.contain,
+          excludeFromSemantics: true,
+          frameBuilder: (context, child, frame, synchronous) =>
+              frame == null && !synchronous
+              ? const SizedBox.shrink()
+              : ColoredBox(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: EdgeInsets.all(size * .10),
+                    child: child,
+                  ),
+                ),
+          errorBuilder: (_, _, _) => fallback(),
+        ),
+      ],
     );
     return Semantics(
       label: team,
@@ -157,31 +176,65 @@ class StatusPill extends StatelessWidget {
   );
 }
 
+/// Status pill colored by what the game's status means for the player.
+class GameStatusPill extends StatelessWidget {
+  const GameStatusPill({super.key, required this.game});
+  final Game game;
+  @override
+  Widget build(BuildContext context) {
+    final (color, background) = switch (game.tone) {
+      GameTone.open => (BetSafeColors.green, BetSafeColors.mint),
+      GameTone.live => (BetSafeColors.ink, BetSafeColors.yellow),
+      GameTone.waiting => (BetSafeColors.lossInk, BetSafeColors.loss),
+      GameTone.finished => (BetSafeColors.muted, BetSafeColors.soft),
+    };
+    return StatusPill(game.statusLabel, color: color, background: background);
+  }
+}
+
 class SportsPanel extends StatelessWidget {
   const SportsPanel({
     super.key,
     required this.child,
     this.color = Colors.white,
     this.padding = const EdgeInsets.all(20),
+    this.onTap,
   });
   final Widget child;
   final Color color;
   final EdgeInsetsGeometry padding;
+
+  /// Makes the whole panel tappable. Screen readers skip this, so a tappable
+  /// panel needs its own button for the same action.
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: DefaultTextStyle.merge(
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(24);
+    final content = DefaultTextStyle.merge(
       style: const TextStyle(color: BetSafeColors.ink),
       child: IconTheme(
         data: const IconThemeData(color: BetSafeColors.ink),
         child: child,
       ),
-    ),
-  );
+    );
+    if (onTap == null) {
+      return Container(
+        padding: padding,
+        decoration: BoxDecoration(color: color, borderRadius: radius),
+        child: content,
+      );
+    }
+    return Material(
+      color: color,
+      borderRadius: radius,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        excludeFromSemantics: true,
+        child: Padding(padding: padding, child: content),
+      ),
+    );
+  }
 }
 
 class MatchTicket extends StatelessWidget {
@@ -190,116 +243,161 @@ class MatchTicket extends StatelessWidget {
     required this.game,
     this.footer,
     this.color = Colors.white,
+    this.onTap,
+    this.onTeamTap,
+    this.selectedTeam,
   });
   final Game game;
   final Widget? footer;
   final Color color;
+  final VoidCallback? onTap;
+
+  /// Lets a tap on either team choose it. The pick screen's team options give
+  /// screen readers the same action, so this stays out of their way.
+  final ValueChanged<String>? onTeamTap;
+  final String? selectedTeam;
+
+  VoidCallback? _tapFor(String team) =>
+      onTeamTap == null ? null : () => onTeamTap!(team);
+
   @override
   Widget build(BuildContext context) {
-    final scheduled = game.status == 'scheduled';
-    final isFinal = game.status == 'final';
-    final awayScore = game.awayScore;
-    final homeScore = game.homeScore;
-    String? result;
-    var hasWinner = false;
-    if (isFinal && awayScore != null && homeScore != null) {
-      hasWinner = awayScore != homeScore;
-      if (hasWinner) {
-        final winner = awayScore > homeScore ? game.away : game.home;
-        result = '$winner Win';
-      } else {
-        result = 'Game tied';
-      }
-    }
+    // A game that never got a score, such as a postponed one, stays "VS". A live
+    // game keeps its score line, because its first points are on the way.
+    final showScore =
+        game.status != 'scheduled' &&
+        (game.status == 'live' ||
+            game.awayScore != null ||
+            game.homeScore != null);
     final text = Theme.of(context).textTheme;
+    final countdown = game.canPick && game.kickoff != null
+        ? kickoffCountdown(game.kickoff!)
+        : null;
     return SportsPanel(
       color: color,
+      onTap: onTap,
       child: Column(
         children: [
-          StatusPill(
-            switch (game.status) {
-              'scheduled' => game.isSimulation ? 'Demo matchup' : 'Scheduled',
-              'live' => game.isSimulation ? 'Simulation · live' : 'In progress',
-              'final' => game.isSimulation ? 'Simulation · Final' : 'Final',
-              _ => game.status,
-            },
-            color: BetSafeColors.muted,
-            background: BetSafeColors.soft,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _TeamColumn(badge: TeamBadge.forGame(game, home: false)),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                child: Column(
-                  children: [
+          // One description for the whole matchup. The footer keeps its own
+          // buttons and text, so it stays outside this.
+          Semantics(
+            container: true,
+            label: game.matchupDescription,
+            child: ExcludeSemantics(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.sports_football, size: 16),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'NFL',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(width: 12),
+                      // A long status wraps inside its pill on narrow screens.
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: GameStatusPill(game: game),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _TeamColumn(
+                          game: game,
+                          home: false,
+                          won: game.winner == game.away,
+                          picked: selectedTeam == game.away,
+                          onTap: _tapFor(game.away),
+                        ),
+                      ),
+                      // At large text sizes a score such as "14 : 10" can be
+                      // wider than the ticket. It shrinks to a third of the
+                      // row instead of pushing the teams off the edge.
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width / 3,
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Column(
+                              children: [
+                                Text(
+                                  showScore
+                                      ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
+                                      : 'VS',
+                                  style: text.headlineSmall?.copyWith(
+                                    color: BetSafeColors.ink,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                if (showScore) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    game.status == 'live'
+                                        ? (game.isSimulation
+                                              ? '4th quarter'
+                                              : 'Live score')
+                                        : game.isTied
+                                        ? 'Tied'
+                                        : game.status == 'final'
+                                        ? 'Final score'
+                                        : 'Score',
+                                    style: const TextStyle(
+                                      color: BetSafeColors.muted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: _TeamColumn(
+                          game: game,
+                          home: true,
+                          won: game.winner == game.home,
+                          picked: selectedTeam == game.home,
+                          onTap: _tapFor(game.home),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!game.isSimulation) ...[
+                    const SizedBox(height: 16),
                     Text(
-                      scheduled
-                          ? 'VS'
-                          : '${awayScore ?? '–'} : ${homeScore ?? '–'}',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.ink,
-                        fontWeight: FontWeight.w900,
+                      game.kickoffLabel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: BetSafeColors.muted,
                       ),
                     ),
-                    if (!isFinal) ...[
+                    if (countdown != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        scheduled
-                            ? 'Away / Home'
-                            : game.status == 'live'
-                            ? (game.isSimulation ? '4th quarter' : 'Live score')
-                            : 'Score',
+                        countdown,
                         style: const TextStyle(
-                          color: BetSafeColors.muted,
-                          fontSize: 11,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: BetSafeColors.ink,
                         ),
                       ),
                     ],
                   ],
-                ),
+                ],
               ),
-              Expanded(
-                child: _TeamColumn(badge: TeamBadge.forGame(game, home: true)),
-              ),
-            ],
+            ),
           ),
-          if (result != null) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: hasWinner ? BetSafeColors.mint : BetSafeColors.soft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text(
-                    result,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: hasWinner
-                          ? BetSafeColors.green
-                          : BetSafeColors.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          if (!game.isSimulation) ...[
-            const SizedBox(height: 16),
-            Text(
-              game.kickoffLabel,
-              style: const TextStyle(fontSize: 12, color: BetSafeColors.muted),
-            ),
-          ],
           if (footer != null) ...[
             const SizedBox(height: 20),
             const Divider(height: 1, color: Color(0x22302419)),
@@ -313,23 +411,71 @@ class MatchTicket extends StatelessWidget {
 }
 
 class _TeamColumn extends StatelessWidget {
-  const _TeamColumn({required this.badge});
-  final TeamBadge badge;
+  const _TeamColumn({
+    required this.game,
+    required this.home,
+    required this.won,
+    required this.picked,
+    required this.onTap,
+  });
+  final Game game;
+  final bool home, won, picked;
+  final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      badge,
-      const SizedBox(height: 10),
-      Text(
-        badge.team,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          height: 1.25,
-        ),
+  Widget build(BuildContext context) => Material(
+    type: MaterialType.transparency,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      excludeFromSemantics: true,
+      child: Column(
+        children: [
+          TeamBadge.forGame(game, home: home),
+          const SizedBox(height: 10),
+          Text(
+            home ? game.home : game.away,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: won ? FontWeight.w900 : FontWeight.w700,
+              height: 1.25,
+              // Set directly, because the Material above resets inherited text
+              // styles to the theme's.
+              color: won || picked ? BetSafeColors.green : BetSafeColors.ink,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            picked ? 'Your pick' : (home ? 'Home' : 'Away'),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: picked ? FontWeight.w700 : null,
+              color: picked ? BetSafeColors.green : BetSafeColors.muted,
+            ),
+          ),
+          if (won) ...[
+            const SizedBox(height: 4),
+            // Wraps instead of overflowing when the column is narrow.
+            const Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              children: [
+                Icon(Icons.emoji_events, size: 14, color: BetSafeColors.green),
+                Text(
+                  'Winner',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: BetSafeColors.green,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
-    ],
+    ),
   );
 }
 

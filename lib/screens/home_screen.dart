@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/game_skeleton.dart';
 import '../widgets/shared.dart';
 import 'games_screen.dart';
 import 'picks_screen.dart';
@@ -86,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Expanded(
             child: api.state == null
                 ? (api.busy
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const GameListSkeleton()
                       : const PageBody(
                           children: [
                             EmptyMessage(

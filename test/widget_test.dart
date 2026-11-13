@@ -94,6 +94,11 @@ void main() {
     );
     await tester.tap(find.text('Lock in pick'));
     await tester.pumpAndSettle();
+    // Nothing is sent until the player confirms on the sheet.
+    expect(requests.where((request) => request.method == 'POST'), isEmpty);
+    expect(find.text('Lock in this pick?'), findsOneWidget);
+    await tester.tap(find.text('Confirm pick'));
+    await tester.pumpAndSettle();
     expect(find.text('Your pick: Buffalo Bills'), findsOneWidget);
     expect(requests.where((request) => request.method == 'POST'), hasLength(1));
     expect(tester.takeException(), isNull);

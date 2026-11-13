@@ -35,6 +35,14 @@ class BetSafeApi extends ChangeNotifier {
     '/api/demo/games/${Uri.encodeComponent(gameId)}/advance',
   );
 
+  /// Clears a shown error, for example once the player has changed the
+  /// choice that caused it. Does nothing while a request is running.
+  void clearError() {
+    if (busy || error == null || _disposed) return;
+    error = null;
+    notifyListeners();
+  }
+
   bool _disposed = false;
   Future<bool> _request(
     String method,

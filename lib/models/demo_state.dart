@@ -1,3 +1,5 @@
+import 'game_time.dart';
+
 class Game {
   const Game({
     required this.id,
@@ -38,11 +40,8 @@ class Game {
   bool get canPick =>
       status == 'scheduled' &&
       (isSimulation || (kickoff?.isAfter(DateTime.now()) ?? false));
-  String get kickoffLabel {
-    if (kickoff == null) return label;
-    final local = kickoff!.toLocal();
-    return '${local.month}/${local.day} · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')} local';
-  }
+  String get kickoffLabel =>
+      kickoff == null ? label : friendlyKickoff(kickoff!);
 }
 
 class Pick {
@@ -82,8 +81,8 @@ class DemoState {
   DemoState.fromJson(Map<String, dynamic> json)
     : nfl = NflStatus.fromJson(json['nfl'] as Map<String, dynamic>? ?? {}),
       playerName = json['account']['name'] as String? ?? 'Player',
-      dailyLimit = json['account']['dailyLimit'] as int,
       coins = json['account']['coins'] as int,
+      dailyLimit = json['account']['dailyLimit'] as int,
       dailyRemaining =
           (json['account']['dailyLimit'] as int) -
           (json['account']['dailyStaked'] as int),
@@ -102,6 +101,13 @@ class DemoState {
   final List<Game> games;
   final List<Pick> picks;
   final List<Collectible> collection;
+  Game? gameById(String id) {
+    for (final game in games) {
+      if (game.id == id) return game;
+    }
+    return null;
+  }
+
   Pick? pickFor(String gameId) {
     for (final pick in picks) {
       if (pick.gameId == gameId) return pick;
@@ -119,6 +125,11 @@ class NflStatus {
   final bool configured, stale;
   final DateTime? fetchedAt;
   final String? error;
+
+  /// True when a configured feed failed or its data has gone out of date.
+  bool get hasProblem => configured && (stale || error != null);
+
+  /// A short note about the NFL feed, or null when it is working normally.
   String? get description {
     if (!configured) return 'NFL games are unavailable. Try Demo games.';
     if (error != null || stale) {

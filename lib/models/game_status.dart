@@ -1,0 +1,93 @@
+import 'demo_state.dart';
+import 'game_time.dart';
+import 'nfl_teams.dart';
+
+/// What a game's status means for the player, whatever the feed calls it.
+enum GameTone { open, live, waiting, finished }
+
+extension GameStatusText on Game {
+  GameTone get tone => switch (status) {
+    'live' => GameTone.live,
+    'final' || 'canceled' || 'abandoned' => GameTone.finished,
+    _ => canPick ? GameTone.open : GameTone.waiting,
+  };
+
+  /// Short text for the card's status pill. Simulations always say so.
+  String get statusLabel => switch (status) {
+    'scheduled' =>
+      isSimulation
+          ? 'Demo matchup'
+          : canPick
+          ? 'Scheduled'
+          : 'Awaiting update',
+    'live' => isSimulation ? 'Simulation · live' : 'In progress',
+    'final' => isSimulation ? 'Simulation · final' : 'Final',
+    'postponed' => 'Postponed',
+    'canceled' => 'Canceled',
+    'delayed' => 'Delayed',
+    'suspended' => 'Suspended',
+    'abandoned' => 'Abandoned',
+    _ => 'Status unknown',
+  };
+
+  /// The winner of a finished game. Null if a score is missing or the game tied.
+  String? get winner {
+    final (awayPoints, homePoints) = (awayScore, homeScore);
+    if (status != 'final' || awayPoints == null || homePoints == null) {
+      return null;
+    }
+    if (awayPoints == homePoints) return null;
+    return awayPoints > homePoints ? away : home;
+  }
+
+  /// Why picks are closed for this game. Null while picks are open.
+  String? get closedReason {
+    if (canPick) return null;
+    return switch (status) {
+      'scheduled' => 'Kickoff has passed, so picks are closed for this game.',
+      'live' =>
+        isSimulation
+            ? 'Picks closed when the simulation started.'
+            : 'Picks closed at kickoff.',
+      'final' =>
+        isSimulation
+            ? 'This simulation has finished.'
+            : 'This game has finished.',
+      'postponed' => 'Picks are paused while this game is postponed.',
+      'delayed' => 'Picks are paused while this game is delayed.',
+      'suspended' => 'Picks are paused while this game is suspended.',
+      'canceled' => 'This game was canceled. Any stake on it is returned.',
+      'abandoned' => 'This game was abandoned. Any stake on it is returned.',
+      _ => 'Picks are paused until the feed reports this game’s status.',
+    };
+  }
+
+  /// True for a finished game with two equal scores.
+  bool get isTied =>
+      status == 'final' &&
+      awayScore != null &&
+      homeScore != null &&
+      awayScore == homeScore;
+
+  /// One sentence-style summary of the card for screen readers.
+  String get matchupDescription {
+    final parts = [
+      '$away at $home.',
+      '${statusLabel.replaceAll(' · ', ', ')}.',
+    ];
+    if (status != 'scheduled' && (awayScore != null || homeScore != null)) {
+      parts.add(
+        '${teamShortName(away)} ${awayScore ?? 'no score'}, '
+        '${teamShortName(home)} ${homeScore ?? 'no score'}.',
+      );
+    }
+    if (winner case final team?) parts.add('${teamShortName(team)} won.');
+    if (isTied) parts.add('Tied.');
+    if (!isSimulation && kickoff != null) {
+      parts.add(
+        'Kickoff ${friendlyKickoff(kickoff!).replaceAll(' · ', ' at ')}.',
+      );
+    }
+    return parts.join(' ');
+  }
+}
