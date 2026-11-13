@@ -6,6 +6,7 @@ import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -86,10 +87,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Lock in pick'),
-          )
-          .onPressed,
+          .widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'))
+          .onPress,
       isNotNull,
     );
     await tester.tap(find.text('Lock in pick'));

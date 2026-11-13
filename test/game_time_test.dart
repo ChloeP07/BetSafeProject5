@@ -69,7 +69,7 @@ void main() {
   group('card countdown', () {
     Future<void> pumpCard(WidgetTester tester, Map<String, dynamic> json) =>
         tester.pumpWidget(
-          MaterialApp(
+          ForuiTestApp(
             home: Scaffold(body: MatchTicket(game: gameFrom(json))),
           ),
         );

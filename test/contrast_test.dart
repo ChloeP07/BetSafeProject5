@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:betsafeproject5/theme.dart';
+import 'package:betsafeproject5/widgets/pick_confirmation_sheet.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
@@ -73,9 +75,8 @@ void main() {
       page,
     );
     expectReadable(tester, 'You’re backing the Bills', page);
-    // The selected stake on mint.
-    expect(paintedColor(tester, '100 coins'), BetSafeColors.green);
-    expectReadable(tester, '100 coins', BetSafeColors.mint);
+    // The selected stake on the yellow accent.
+    expectReadable(tester, '100 coins', BetSafeColors.yellow);
     // The payout panel on mint.
     expectReadable(tester, 'If your team wins', BetSafeColors.mint);
     expectReadable(tester, '200 coins returned', BetSafeColors.mint);
@@ -90,12 +91,17 @@ void main() {
     );
   });
 
-  testWidgets('the selected stake keeps a green check on mint', (tester) async {
+  testWidgets('the selected stake shows a check, not just a color', (
+    tester,
+  ) async {
     await pumpPick(tester, stateJson());
-    final chip = tester.widget<ChoiceChip>(
-      find.widgetWithText(ChoiceChip, '100 coins'),
+    expect(
+      find.descendant(
+        of: find.widgetWithText(FButton, '100 coins'),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsOneWidget,
     );
-    expect(chip.checkmarkColor, BetSafeColors.green);
   });
 
   testWidgets('a stake that cannot be chosen looks disabled', (tester) async {
@@ -119,9 +125,9 @@ void main() {
       tester,
       'The NFL data may be out of date, so NFL picks are paused until a '
       'refresh works.',
-      BetSafeColors.soft,
+      Colors.white,
     );
-    expectReadable(tester, 'Refresh NFL data', BetSafeColors.soft);
+    expectReadable(tester, 'Refresh NFL data', Colors.white);
   });
 
   testWidgets('the confirmation sheet is readable', (tester) async {
@@ -139,14 +145,14 @@ void main() {
       expectReadable(tester, text, BetSafeColors.paper);
     }
     final sheetTeam = find.descendant(
-      of: find.byType(BottomSheet),
+      of: find.byType(PickConfirmationSheet),
       matching: find.text('Buffalo Bills'),
     );
     expect(
       tester.renderObject<RenderParagraph>(sheetTeam).text.style!.color,
       BetSafeColors.ink,
     );
-    expectReadable(tester, 'Confirm pick', BetSafeColors.green);
+    expectReadable(tester, 'Confirm pick', BetSafeColors.ink);
     final handle = tester.widget<Container>(
       find.byKey(const ValueKey('sheet-handle')),
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -78,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ];
       final content = Column(
         children: [
-          if (api.busy) const LinearProgressIndicator(),
+          if (api.busy) const FProgress(semanticsLabel: 'Loading'),
           if (api.error != null)
             ServerError(
               message: api.error!,
@@ -139,54 +140,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             : SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 18),
-                  child: Center(
-                    heightFactor: 1,
-                    child: Container(
-                      width: 240,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: BetSafeColors.ink,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x33000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                  // Forui's bottom navigation bar, in a rounded white bar.
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFE2DCD2)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1A302016),
+                          blurRadius: 16,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: FBottomNavigationBar(
+                        index: destination,
+                        onChange: (value) =>
+                            setState(() => destination = value),
                         children: [
                           for (final (index, item) in destinations.indexed)
-                            Semantics(
-                              selected: destination == index,
-                              child: IconButton(
-                                tooltip: item.label,
-                                onPressed: () =>
-                                    setState(() => destination = index),
-                                style: IconButton.styleFrom(
-                                  fixedSize: const Size.square(48),
-                                  backgroundColor: destination == index
-                                      ? BetSafeColors.yellow
-                                      : Colors.transparent,
-                                  foregroundColor: destination == index
-                                      ? BetSafeColors.ink
-                                      : Colors.white,
-                                ),
-                                icon: Badge.count(
-                                  count: api.state?.picks.length ?? 0,
-                                  isLabelVisible:
-                                      index == 1 &&
-                                      (api.state?.picks.isNotEmpty ?? false),
-                                  backgroundColor: BetSafeColors.yellow,
-                                  textColor: BetSafeColors.ink,
-                                  child: destination == index
-                                      ? item.selectedIcon
-                                      : item.icon,
-                                ),
+                            FBottomNavigationBarItem(
+                              icon: Badge.count(
+                                count: api.state?.picks.length ?? 0,
+                                isLabelVisible:
+                                    index == 1 &&
+                                    (api.state?.picks.isNotEmpty ?? false),
+                                backgroundColor: BetSafeColors.yellow,
+                                textColor: BetSafeColors.ink,
+                                child: destination == index
+                                    ? item.selectedIcon!
+                                    : item.icon,
                               ),
+                              label: Text(item.label),
                             ),
                         ],
                       ),

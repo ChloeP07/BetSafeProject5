@@ -35,7 +35,7 @@ void main() {
     await tester.pumpWidget(
       const MediaQuery(
         data: MediaQueryData(disableAnimations: true),
-        child: MaterialApp(home: Scaffold(body: GameListSkeleton())),
+        child: ForuiTestApp(home: Scaffold(body: GameListSkeleton())),
       ),
     );
     // Settling would time out if the pulse kept running.
@@ -48,7 +48,7 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: GameListSkeleton())),
+      const ForuiTestApp(home: Scaffold(body: GameListSkeleton())),
     );
     await tester.pump();
     expect(find.bySemanticsLabel('Loading games'), findsOneWidget);

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
@@ -56,7 +56,7 @@ void main() {
 
   testWidgets('a search finds them without unfolding by hand', (tester) async {
     await pumpApp(tester, mixedState());
-    await tester.enterText(find.byType(TextField), 'eagles');
+    await tester.enterText(find.byType(FTextField), 'eagles');
     await tester.pumpAndSettle();
     expect(find.text('Eagles'), findsOneWidget);
     expect(find.text('Show 1 game'), findsNothing);

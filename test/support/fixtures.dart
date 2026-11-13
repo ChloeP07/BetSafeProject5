@@ -1,11 +1,14 @@
 import 'dart:convert';
 
+import 'package:betsafeproject5/forui_theme.dart';
 import 'package:betsafeproject5/main.dart';
 import 'package:betsafeproject5/models/demo_state.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
+import 'package:betsafeproject5/theme.dart';
 import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -171,7 +174,41 @@ Future<void> lockInPick(WidgetTester tester) async {
 /// Pumps one matchup card on its own.
 Future<void> pumpTicket(WidgetTester tester, Map<String, dynamic> json) =>
     tester.pumpWidget(
-      MaterialApp(
+      ForuiTestApp(
         home: Scaffold(body: MatchTicket(game: gameFrom(json))),
       ),
     );
+
+/// A MaterialApp with the app's themes, Forui's included, for pumping single
+/// widgets the way the app shows them.
+class ForuiTestApp extends StatelessWidget {
+  const ForuiTestApp({super.key, required this.home, this.theme});
+  final Widget home;
+  final ThemeData? theme;
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    theme: theme ?? betSafeTheme(),
+    localizationsDelegates: FLocalizations.localizationsDelegates,
+    supportedLocales: FLocalizations.supportedLocales,
+    builder: (context, child) => FTheme(
+      data: betSafeForuiTheme,
+      child: FToaster(child: child!),
+    ),
+    home: home,
+  );
+}
+
+/// Taps the Forui header's back button, the way a player leaves a page.
+Future<void> goBack(WidgetTester tester) async {
+  await tester.tap(find.byType(FHeaderAction).first);
+  await tester.pumpAndSettle();
+}
+
+/// The text in the Games search box.
+String searchText(WidgetTester tester) =>
+    tester.widget<EditableText>(find.byType(EditableText)).controller.text;
+
+/// The Forui search box's clear button.
+Finder clearSearchButton() => find.byWidgetPredicate(
+  (widget) => widget is Icon && widget.semanticLabel == 'Clear',
+);

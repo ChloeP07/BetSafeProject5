@@ -1,12 +1,13 @@
 import 'package:betsafeproject5/widgets/daily_limit_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
 Future<void> pumpBar(WidgetTester tester, int remaining, int limit) =>
     tester.pumpWidget(
-      MaterialApp(
+      ForuiTestApp(
         home: Scaffold(
           body: DailyLimitBar(remaining: remaining, limit: limit),
         ),
@@ -14,7 +15,7 @@ Future<void> pumpBar(WidgetTester tester, int remaining, int limit) =>
     );
 
 double? barValue(WidgetTester tester) => tester
-    .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
+    .widget<FDeterminateProgress>(find.byType(FDeterminateProgress))
     .value;
 
 void main() {

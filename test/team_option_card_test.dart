@@ -1,15 +1,17 @@
-import 'package:betsafeproject5/theme.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+
+import 'support/fixtures.dart';
 
 Future<void> pumpOption(
   WidgetTester tester, {
   bool selected = false,
   VoidCallback? onTap,
 }) => tester.pumpWidget(
-  MaterialApp(
+  ForuiTestApp(
     home: Scaffold(
       body: TeamOptionCard(
         team: 'Buffalo Bills',
@@ -29,6 +31,7 @@ void main() {
     expect(find.text('BUF'), findsOneWidget);
     expect(find.text('Home team'), findsOneWidget);
     await tester.tap(find.byType(TeamOptionCard));
+    await tester.pumpAndSettle();
     expect(taps, 1);
   });
 
@@ -38,21 +41,27 @@ void main() {
     expect(find.byIcon(Icons.check_circle), findsNothing);
   });
 
-  testWidgets('a selected option is green with a check', (tester) async {
+  testWidgets('a selected option takes the accent, with a check', (
+    tester,
+  ) async {
     await pumpOption(tester, selected: true, onTap: () {});
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
-    final style = tester
-        .widget<OutlinedButton>(find.byType(OutlinedButton))
-        .style!;
-    expect(style.backgroundColor!.resolve({}), BetSafeColors.mint);
+    final button = tester.widget<FButton>(find.byType(FButton));
+    expect(button.variant, FButtonVariant.secondary);
+    expect(button.selected, isTrue);
+  });
+
+  testWidgets('an unselected option is outlined', (tester) async {
+    await pumpOption(tester, onTap: () {});
+    expect(
+      tester.widget<FButton>(find.byType(FButton)).variant,
+      FButtonVariant.outline,
+    );
   });
 
   testWidgets('with no callback it is disabled', (tester) async {
     await pumpOption(tester);
-    expect(
-      tester.widget<OutlinedButton>(find.byType(OutlinedButton)).enabled,
-      isFalse,
-    );
+    expect(tester.widget<FButton>(find.byType(FButton)).onPress, isNull);
   });
 
   group('screen readers', () {

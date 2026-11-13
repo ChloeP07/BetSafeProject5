@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
@@ -105,17 +106,14 @@ class PicksScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).push(
+                FButton(
+                  size: .lg,
+                  onPress: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => GameScreen(api: api, gameId: pick.gameId),
                     ),
                   ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: BetSafeColors.ink,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('View pick'),
+                  child: const ButtonLabel('View pick'),
                 ),
               ],
             ),

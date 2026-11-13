@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../models/demo_state.dart';
 import '../models/game_status.dart';
@@ -162,17 +163,23 @@ class StatusPill extends StatelessWidget {
   });
   final String label;
   final Color color, background;
+
+  /// A Forui badge in this pill's own colors.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(20),
+  Widget build(BuildContext context) => FBadge(
+    style: .delta(
+      decoration: .boxDelta(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: background),
+      ),
+      labelTextStyle: .delta(
+        color: color,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
     ),
-    child: Text(
-      label,
-      style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
-    ),
+    child: Text(label),
   );
 }
 
@@ -218,10 +225,18 @@ class SportsPanel extends StatelessWidget {
       ),
     );
     if (onTap == null) {
-      return Container(
-        padding: padding,
-        decoration: BoxDecoration(color: color, borderRadius: radius),
-        child: content,
+      // A Forui card in this panel's color. FCard adds no padding of its own.
+      return FCard(
+        style: .delta(
+          decoration: .boxDelta(
+            color: color,
+            borderRadius: radius,
+            border: Border.all(
+              color: color == Colors.white ? const Color(0xFFE2DCD2) : color,
+            ),
+          ),
+        ),
+        child: Padding(padding: padding, child: content),
       );
     }
     return Material(

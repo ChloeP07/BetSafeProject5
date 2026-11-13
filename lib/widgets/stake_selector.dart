@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../models/pick_rules.dart';
-import '../theme.dart';
+import 'shared.dart';
 
 export '../models/pick_rules.dart' show stakeOptions;
 
-/// One chip per stake. A null [onChanged] disables every chip.
+/// One Forui button per stake. A null [onChanged] disables every one.
 class StakeSelector extends StatelessWidget {
   const StakeSelector({
     super.key,
@@ -30,37 +31,38 @@ class StakeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
+    final theme = context.theme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 12,
+          spacing: 10,
           runSpacing: 8,
           children: [
             for (final value in stakeOptions)
-              ChoiceChip(
-                label: Text('$value coins'),
+              FButton(
+                // The chosen stake takes the yellow accent, with a check so
+                // the choice does not rely on color alone.
+                variant: selected == value ? .secondary : .outline,
+                size: .lg,
+                mainAxisSize: .min,
                 selected: selected == value,
-                onSelected: _enabled(value) ? (_) => onChanged!(value) : null,
-                selectedColor: BetSafeColors.mint,
-                // The default check is light in dark mode and vanishes on mint.
-                checkmarkColor: BetSafeColors.green,
-                // A set color would otherwise show a disabled chip as enabled.
-                labelStyle: TextStyle(
-                  color: selected == value
-                      ? BetSafeColors.green
-                      : _enabled(value)
-                      ? onSurface
-                      : onSurface.withValues(alpha: .5),
-                ),
+                onPress: _enabled(value) ? () => onChanged!(value) : null,
+                prefix: selected == value
+                    ? const Icon(Icons.check, size: 16)
+                    : null,
+                child: ButtonLabel('$value coins'),
               ),
           ],
         ),
         if (caption case final text?) ...[
           const SizedBox(height: 8),
-          Text(text, style: theme.textTheme.bodySmall),
+          Text(
+            text,
+            style: theme.typography.body.sm.copyWith(
+              color: theme.colors.mutedForeground,
+            ),
+          ),
         ],
       ],
     );

@@ -1,8 +1,8 @@
 import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
@@ -11,9 +11,8 @@ Finder option(String team) => find.widgetWithText(TeamOptionCard, team);
 Finder onTicket(String text) =>
     find.descendant(of: find.byType(MatchTicket), matching: find.text(text));
 
-FilledButton lockInButton(WidgetTester tester) => tester.widget<FilledButton>(
-  find.widgetWithText(FilledButton, 'Lock in pick'),
-);
+FButton lockInButton(WidgetTester tester) =>
+    tester.widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'));
 
 /// Records haptic requests sent to the phone.
 List<String> recordHaptics(WidgetTester tester) {
@@ -48,11 +47,11 @@ void main() {
     await pumpPick(tester, stateJson());
     await tester.tap(option('Buffalo Bills'));
     await tester.pumpAndSettle();
-    expect(lockInButton(tester).onPressed, isNotNull);
+    expect(lockInButton(tester).onPress, isNotNull);
 
     await tester.tap(option('Buffalo Bills'));
     await tester.pumpAndSettle();
-    expect(lockInButton(tester).onPressed, isNull);
+    expect(lockInButton(tester).onPress, isNull);
     expect(find.textContaining('backing'), findsNothing);
     expect(
       tester.widget<TeamOptionCard>(option('Buffalo Bills')).selected,
@@ -83,7 +82,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(onTicket('Your pick'), findsNothing);
       expect(onTicket('Home'), findsOneWidget);
-      expect(lockInButton(tester).onPressed, isNull);
+      expect(lockInButton(tester).onPress, isNull);
     });
 
     testWidgets('a choice below shows on the ticket too', (tester) async {

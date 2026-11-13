@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../theme.dart';
 
@@ -52,17 +53,7 @@ class DailyLimitBar extends StatelessWidget {
           container: true,
           label: 'Today’s stake limit',
           value: '$staked of $limit coins staked',
-          child: ExcludeSemantics(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: used,
-                minHeight: 8,
-                color: BetSafeColors.ink,
-                backgroundColor: BetSafeColors.soft,
-              ),
-            ),
-          ),
+          child: ExcludeSemantics(child: FDeterminateProgress(value: used)),
         ),
       ],
     );

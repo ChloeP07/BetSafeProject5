@@ -9,6 +9,7 @@ import 'package:betsafeproject5/widgets/pick_confirmation_sheet.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -64,17 +65,14 @@ void main() {
     await settleSheet(tester);
     final button = find.ancestor(
       of: find.text('Saving pick…'),
-      matching: find.byType(FilledButton),
+      matching: find.byType(FButton),
     );
     expect(button, findsOneWidget);
     expect(
-      find.descendant(
-        of: button,
-        matching: find.byType(CircularProgressIndicator),
-      ),
+      find.descendant(of: button, matching: find.byType(FCircularProgress)),
       findsOneWidget,
     );
-    expect(tester.widget<FilledButton>(button).onPressed, isNull);
+    expect(tester.widget<FButton>(button).onPress, isNull);
     expect(find.text('Choose a team to continue.'), findsNothing);
 
     serverReply.complete();

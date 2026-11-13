@@ -1,19 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
-ChoiceChip chip(WidgetTester tester, int value) =>
-    tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '$value coins'));
+FButton chip(WidgetTester tester, int value) =>
+    tester.widget<FButton>(find.widgetWithText(FButton, '$value coins'));
 
 void main() {
   testWidgets('a low balance disables the stakes it cannot cover', (
     tester,
   ) async {
     await pumpPick(tester, stateJson(coins: 120));
-    expect(chip(tester, 50).onSelected, isNotNull);
-    expect(chip(tester, 100).onSelected, isNotNull);
-    expect(chip(tester, 250).onSelected, isNull);
+    expect(chip(tester, 50).onPress, isNotNull);
+    expect(chip(tester, 100).onPress, isNotNull);
+    expect(chip(tester, 250).onPress, isNull);
     expect(
       find.text('Stakes over your 120-coin balance are unavailable.'),
       findsOneWidget,
@@ -24,9 +24,9 @@ void main() {
     tester,
   ) async {
     await pumpPick(tester, stateJson(dailyStaked: 400));
-    expect(chip(tester, 50).onSelected, isNotNull);
-    expect(chip(tester, 100).onSelected, isNotNull);
-    expect(chip(tester, 250).onSelected, isNull);
+    expect(chip(tester, 50).onPress, isNotNull);
+    expect(chip(tester, 100).onPress, isNotNull);
+    expect(chip(tester, 250).onPress, isNull);
     expect(
       find.text(
         'Stakes over the 100 coins left in today’s limit are unavailable.',
@@ -40,7 +40,7 @@ void main() {
   ) async {
     await pumpPick(tester, stateJson());
     for (final value in [50, 100, 250]) {
-      expect(chip(tester, value).onSelected, isNotNull);
+      expect(chip(tester, value).onPress, isNotNull);
     }
     expect(find.textContaining('unavailable'), findsNothing);
   });
@@ -78,7 +78,7 @@ void main() {
     await pumpPick(tester, stateJson(coins: 30));
     for (final value in [50, 100, 250]) {
       expect(chip(tester, value).selected, isFalse);
-      expect(chip(tester, value).onSelected, isNull);
+      expect(chip(tester, value).onPress, isNull);
     }
     expect(find.textContaining('coins returned'), findsNothing);
   });

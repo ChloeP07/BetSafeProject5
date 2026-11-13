@@ -10,7 +10,7 @@ import 'support/fixtures.dart';
 Color? paintedColor(WidgetTester tester, String text) =>
     tester.renderObject<RenderParagraph>(find.text(text)).text.style?.color;
 
-Widget ticket({String? selectedTeam}) => MaterialApp(
+Widget ticket({String? selectedTeam}) => ForuiTestApp(
   theme: betSafeTheme(),
   home: Scaffold(
     body: MatchTicket(

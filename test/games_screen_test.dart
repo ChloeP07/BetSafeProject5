@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
@@ -71,8 +72,8 @@ Map<String, dynamic> threeDemoGames() => stateJson(
   ],
 );
 
-ChoiceChip chip(WidgetTester tester, String label) =>
-    tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+FButton chip(WidgetTester tester, String label) =>
+    tester.widget<FButton>(find.widgetWithText(FButton, label));
 
 void main() {
   testWidgets('greets the player and shows what the server sent', (
@@ -155,7 +156,7 @@ void main() {
   group('team search', () {
     testWidgets('narrows the list and updates the chip counts', (tester) async {
       await pumpApp(tester, threeDemoGames());
-      await tester.enterText(find.byType(TextField), 'eagles');
+      await tester.enterText(find.byType(FTextField), 'eagles');
       await tester.pumpAndSettle();
       expect(gameCard(), findsOneWidget);
       expect(find.text('Eagles'), findsOneWidget);
@@ -164,27 +165,24 @@ void main() {
 
     testWidgets('the clear button brings every game back', (tester) async {
       await pumpApp(tester, threeDemoGames());
-      await tester.enterText(find.byType(TextField), 'gb');
+      await tester.enterText(find.byType(FTextField), 'gb');
       await tester.pumpAndSettle();
       expect(gameCard(), findsOneWidget);
-      await tester.tap(find.byTooltip('Clear search'));
+      await tester.tap(clearSearchButton());
       await tester.pumpAndSettle();
       expect(gameCard(), findsNWidgets(3));
     });
 
     testWidgets('no matches offers a way back to every game', (tester) async {
       await pumpApp(tester, threeDemoGames());
-      await tester.enterText(find.byType(TextField), 'nobody');
+      await tester.enterText(find.byType(FTextField), 'nobody');
       await tester.pumpAndSettle();
       expect(gameCard(), findsNothing);
       expect(find.text('No games match'), findsOneWidget);
       await tester.tap(find.text('Clear filters'));
       await tester.pumpAndSettle();
       expect(gameCard(), findsNWidgets(3));
-      expect(
-        tester.widget<TextField>(find.byType(TextField)).controller!.text,
-        isEmpty,
-      );
+      expect(searchText(tester), isEmpty);
     });
 
     testWidgets('a filter with no games also offers Clear filters', (
@@ -216,7 +214,7 @@ void main() {
     testWidgets('keeps the chosen filter and search', (tester) async {
       var gets = 0;
       await pumpApp(tester, threeDemoGames(), onRequest: (_) => gets++);
-      await tester.enterText(find.byType(TextField), 'bills');
+      await tester.enterText(find.byType(FTextField), 'bills');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Open · 1'));
       await tester.pumpAndSettle();
@@ -227,10 +225,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(gets, 2);
-      expect(
-        tester.widget<TextField>(find.byType(TextField)).controller!.text,
-        'bills',
-      );
+      expect(searchText(tester), 'bills');
       expect(chip(tester, 'Open · 1').selected, isTrue);
     });
   });

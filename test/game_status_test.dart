@@ -71,7 +71,7 @@ void main() {
   testWidgets('pill colors follow the tone', (tester) async {
     Future<StatusPill> pillFor(String status) async {
       await tester.pumpWidget(
-        MaterialApp(
+        ForuiTestApp(
           home: Scaffold(
             body: GameStatusPill(
               game: gameFrom(nflGameJson(status: status, kickoff: soon)),
@@ -130,7 +130,7 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(
-      MaterialApp(
+      ForuiTestApp(
         home: Scaffold(
           body: MatchTicket(
             game: gameFrom(demoGameJson()),
@@ -152,7 +152,7 @@ void main() {
 
   testWidgets('the card capitalizes a raw feed status', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      ForuiTestApp(
         home: Scaffold(
           body: MatchTicket(game: gameFrom(nflGameJson(status: 'postponed'))),
         ),

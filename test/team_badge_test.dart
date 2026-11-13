@@ -2,7 +2,9 @@ import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _badge(String team) => MaterialApp(
+import 'support/fixtures.dart';
+
+Widget _badge(String team) => ForuiTestApp(
   home: Scaffold(body: TeamBadge(team: team)),
 );
 

@@ -6,7 +6,7 @@ import 'support/fixtures.dart';
 
 Widget figure(int coins, {bool reduceMotion = false}) => MediaQuery(
   data: MediaQueryData(disableAnimations: reduceMotion),
-  child: MaterialApp(
+  child: ForuiTestApp(
     home: Scaffold(body: PayoutFigure(coins: coins)),
   ),
 );

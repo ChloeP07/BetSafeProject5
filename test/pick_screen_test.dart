@@ -1,13 +1,13 @@
 import 'package:betsafeproject5/screens/pick_screen.dart';
+import 'package:betsafeproject5/widgets/stake_selector.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
-FilledButton lockIn(WidgetTester tester) => tester.widget<FilledButton>(
-  find.widgetWithText(FilledButton, 'Lock in pick'),
-);
+FButton lockIn(WidgetTester tester) =>
+    tester.widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'));
 
 void main() {
   group('kickoff note', () {
@@ -35,7 +35,7 @@ void main() {
       tester,
     ) async {
       await pumpPick(tester, stateJson());
-      await tester.pageBack();
+      await goBack(tester);
       await tester.pumpAndSettle();
       // A timer left running would fail this test when it ends.
       await tester.pump(const Duration(seconds: 31));
@@ -52,7 +52,7 @@ void main() {
       final api = await pumpPick(tester, json);
       await tester.tap(find.widgetWithText(TeamOptionCard, 'Buffalo Bills'));
       await tester.pumpAndSettle();
-      expect(lockIn(tester).onPressed, isNotNull);
+      expect(lockIn(tester).onPress, isNotNull);
       json['games'] = [nflGameJson(status: status)];
       await api.refresh();
       await tester.pumpAndSettle();
@@ -62,7 +62,7 @@ void main() {
     testWidgets('explains why and stops the pick', (tester) async {
       await closeGame(tester, 'live');
       expect(find.text('Picks closed at kickoff.'), findsOneWidget);
-      expect(lockIn(tester).onPressed, isNull);
+      expect(lockIn(tester).onPress, isNull);
     });
 
     testWidgets('names the status when a game is postponed', (tester) async {
@@ -79,8 +79,14 @@ void main() {
         find.byType(TeamOptionCard),
       );
       expect(cards.every((card) => card.onTap == null), isTrue);
-      final chips = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip));
-      expect(chips.every((chip) => chip.onSelected == null), isTrue);
+      final stakes = tester.widgetList<FButton>(
+        find.descendant(
+          of: find.byType(StakeSelector),
+          matching: find.byType(FButton),
+        ),
+      );
+      expect(stakes, hasLength(3));
+      expect(stakes.every((stake) => stake.onPress == null), isTrue);
     });
 
     testWidgets('offers a way back to the list', (tester) async {

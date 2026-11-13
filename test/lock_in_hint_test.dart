@@ -1,6 +1,6 @@
 import 'package:betsafeproject5/widgets/team_option_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'support/fixtures.dart';
 
@@ -21,10 +21,8 @@ void main() {
     expect(find.text('Choose a team to continue.'), findsNothing);
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Lock in pick'),
-          )
-          .onPressed,
+          .widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'))
+          .onPress,
       isNotNull,
     );
   });

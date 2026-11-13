@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../models/demo_state.dart';
 import '../models/game_list.dart';
@@ -19,6 +20,7 @@ const _yellow = BetSafeColors.yellow;
 const _paper = BetSafeColors.paper;
 const _muted = BetSafeColors.muted;
 const _lightMuted = Color(0xffcfc9be);
+const _border = Color(0xFFE2DCD2);
 
 TextStyle _type(double size, double weight, [Color color = _ink]) => TextStyle(
   fontFamily: 'Inter',
@@ -160,9 +162,8 @@ class _GamesScreenState extends State<GamesScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircleAvatar(
-                      radius: 21,
-                      backgroundColor: _ink,
+                    FAvatar.raw(
+                      size: 42,
                       child: Text(
                         state.playerName.trim().isEmpty
                             ? 'P'
@@ -170,7 +171,7 @@ class _GamesScreenState extends State<GamesScreen> {
                                   .trim()
                                   .substring(0, 1)
                                   .toUpperCase(),
-                        style: _type(18, 800, _yellow),
+                        style: _type(18, 800),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -217,24 +218,16 @@ class _GamesScreenState extends State<GamesScreen> {
               child: Row(
                 children: [
                   for (final day in days)
-                    _DayButton(
-                      title: const [
-                        'Mon',
-                        'Tue',
-                        'Wed',
-                        'Thu',
-                        'Fri',
-                        'Sat',
-                        'Sun',
-                      ][day.weekday - 1],
-                      date: '${day.month}/${day.day}',
+                    _ToggleButton(
+                      label:
+                          '${const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} ${day.month}/${day.day}',
                       selected: !isDemo && DateUtils.isSameDay(activeDay, day),
-                      onTap: () => _showList(day: day, isDemo: false),
+                      onPress: () => _showList(day: day, isDemo: false),
                     ),
-                  _DayButton(
-                    title: 'Demo',
+                  _ToggleButton(
+                    label: 'Demo',
                     selected: isDemo,
-                    onTap: () => _showList(isDemo: true),
+                    onPress: () => _showList(isDemo: true),
                   ),
                 ],
               ),
@@ -258,27 +251,18 @@ class _GamesScreenState extends State<GamesScreen> {
             ],
             if (listGames.isNotEmpty) ...[
               const SizedBox(height: 14),
-              TextField(
-                controller: search,
-                onChanged: (_) => setState(() {}),
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  labelText: 'Search teams',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  suffixIcon: search.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Clear search',
-                          icon: const Icon(Icons.close),
-                          onPressed: () => setState(search.clear),
-                        ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
+              FTextField(
+                control: .managed(
+                  controller: search,
+                  onChange: (_) => setState(() {}),
                 ),
+                hint: 'Search teams',
+                textInputAction: TextInputAction.search,
+                prefixBuilder: (context, style, variants) => const Padding(
+                  padding: EdgeInsetsDirectional.only(start: 12),
+                  child: Icon(Icons.search, size: 20, color: _muted),
+                ),
+                clearable: (value) => value.text.isNotEmpty,
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -286,20 +270,12 @@ class _GamesScreenState extends State<GamesScreen> {
                 runSpacing: 8,
                 children: [
                   for (final option in GameFilter.values)
-                    ChoiceChip(
-                      label: Text(
-                        '${option.label} · ${searched.where(option.matches).length}',
-                      ),
+                    _ToggleButton(
+                      label:
+                          '${option.label} · ${searched.where(option.matches).length}',
                       selected: filter == option,
-                      selectedColor: _ink,
-                      checkmarkColor: _yellow,
-                      backgroundColor: Colors.white,
-                      labelStyle: _type(
-                        13,
-                        700,
-                        filter == option ? Colors.white : _ink,
-                      ),
-                      onSelected: (_) => setState(() => filter = option),
+                      onPress: () => setState(() => filter = option),
+                      trailingGap: false,
                     ),
                 ],
               ),
@@ -353,18 +329,21 @@ class _GamesScreenState extends State<GamesScreen> {
                             ),
                           ),
                           if (canCollapse && section.tone == GameTone.finished)
-                            TextButton(
-                              onPressed: () =>
-                                  setState(() => showFinished = !showFinished),
-                              style: TextButton.styleFrom(
-                                foregroundColor: _ink,
-                                minimumSize: const Size(48, 40),
-                              ),
-                              child: Text(
-                                showFinished
-                                    ? 'Hide'
-                                    : 'Show ${gameCountLabel(section.games.length)}',
-                                style: _type(13, 800),
+                            // Flexible, so at large text sizes the label wraps
+                            // instead of pushing the button off the screen.
+                            Flexible(
+                              child: FButton(
+                                variant: .ghost,
+                                size: .lg,
+                                mainAxisSize: .min,
+                                onPress: () => setState(
+                                  () => showFinished = !showFinished,
+                                ),
+                                child: ButtonLabel(
+                                  showFinished
+                                      ? 'Hide'
+                                      : 'Show ${gameCountLabel(section.games.length)}',
+                                ),
                               ),
                             ),
                         ],
@@ -395,7 +374,37 @@ class _GamesScreenState extends State<GamesScreen> {
   }
 }
 
-/// A short message with an icon, and an optional action such as Try again.
+/// A Forui button that shows whether it is the chosen one, for the day picker
+/// and the status filters. Large, so it meets the 48-pixel touch target.
+class _ToggleButton extends StatelessWidget {
+  const _ToggleButton({
+    required this.label,
+    required this.selected,
+    required this.onPress,
+    this.trailingGap = true,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onPress;
+  final bool trailingGap;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = FButton(
+      variant: selected ? .primary : .outline,
+      size: .lg,
+      mainAxisSize: .min,
+      selected: selected,
+      onPress: onPress,
+      child: ButtonLabel(label),
+    );
+    return trailingGap
+        ? Padding(padding: const EdgeInsets.only(right: 8), child: button)
+        : button;
+  }
+}
+
+/// A Forui alert with an optional action, such as Try again.
 class _Notice extends StatelessWidget {
   const _Notice({
     required this.icon,
@@ -409,32 +418,20 @@ class _Notice extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    container: true,
-    liveRegion: true,
-    child: Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: _ink),
-          const SizedBox(width: 10),
-          Expanded(child: Text(message, style: _type(13, 600))),
-          if (action != null)
-            TextButton(
-              onPressed: onAction,
-              style: TextButton.styleFrom(
-                foregroundColor: _ink,
-                minimumSize: const Size(48, 44),
-              ),
-              child: Text(action!, style: _type(13, 800)),
-            ),
-        ],
-      ),
-    ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      FAlert(icon: Icon(icon), title: Text(message)),
+      if (action != null) ...[
+        const SizedBox(height: 8),
+        FButton(
+          variant: .outline,
+          size: .lg,
+          onPress: onAction,
+          child: ButtonLabel(action!),
+        ),
+      ],
+    ],
   );
 }
 
@@ -450,26 +447,21 @@ class _EmptyList extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(14),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: _type(16, 800)),
-        const SizedBox(height: 4),
-        Text(message, style: _type(13, 600, _muted)),
-        if (action != null) ...[
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: onAction,
-            style: FilledButton.styleFrom(
-              backgroundColor: _ink,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(action!),
-          ),
+  Widget build(BuildContext context) => FCard(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: _type(16, 800)),
+          const SizedBox(height: 4),
+          Text(message, style: _type(13, 600, _muted)),
+          if (action != null) ...[
+            const SizedBox(height: 12),
+            FButton(size: .lg, onPress: onAction, child: ButtonLabel(action!)),
+          ],
         ],
-      ],
+      ),
     ),
   );
 }
@@ -531,48 +523,6 @@ class _CoinChip extends StatelessWidget {
   }
 }
 
-class _DayButton extends StatelessWidget {
-  const _DayButton({
-    required this.title,
-    this.date,
-    required this.selected,
-    required this.onTap,
-  });
-  final String title;
-  final String? date;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(right: 8),
-    child: Semantics(
-      selected: selected,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: selected ? _ink : Colors.white,
-          minimumSize: const Size(64, 58),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-        onPressed: onTap,
-        child: Column(
-          children: [
-            Text(title, style: _type(13, 800, selected ? _yellow : _ink)),
-            if (date != null)
-              Text(
-                date!,
-                style: _type(11, 600, selected ? Colors.white : _muted),
-              ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
 class _GameCard extends StatelessWidget {
   const _GameCard({
     required this.game,
@@ -605,6 +555,7 @@ class _GameCard extends StatelessWidget {
     final isLive = game.status == 'live';
     final hasScore = game.awayScore != null && game.homeScore != null;
     final closed = pick == null && !isFinal ? game.closedReason : null;
+    final radius = BorderRadius.circular(featured ? 28 : 18);
 
     // The big middle line: a score once there is one, otherwise the kickoff.
     final headline = isFinal
@@ -624,243 +575,204 @@ class _GameCard extends StatelessWidget {
               : timeParts!.last)
         : null;
 
+    // On the dark featured card, buttons use the yellow accent.
     Widget action(_Club club) {
       final picked = pick?.team == club.name;
       return Expanded(
-        child: FilledButton(
-          onPressed: onOpen == null || (!canOpenPick && !picked)
+        child: FButton(
+          variant: picked || featured ? .secondary : .primary,
+          size: .lg,
+          onPress: onOpen == null || (!canOpenPick && !picked)
               ? null
               : () => onOpen!(club.name),
-          style: FilledButton.styleFrom(
-            backgroundColor: club.color,
-            foregroundColor: Colors.white,
-            minimumSize: Size(0, featured ? 48 : 44),
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(featured ? 14 : 12),
-            ),
-            side: picked ? const BorderSide(color: _yellow, width: 2) : null,
-          ),
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 4,
-            children: [
-              if (picked) const Icon(Icons.check, size: 14, color: _yellow),
-              Text(
-                picked ? '${club.code} picked' : 'Pick ${club.code}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+          prefix: picked
+              ? const Icon(Icons.check, size: 16)
+              : _TeamDot(color: club.color),
+          child: ButtonLabel(
+            picked ? '${club.code} picked' : 'Pick ${club.code}',
           ),
         ),
       );
     }
 
     return Material(
-      color: featured ? _ink : Colors.white,
-      borderRadius: BorderRadius.circular(featured ? 28 : 17),
-      clipBehavior: Clip.antiAlias,
+      type: MaterialType.transparency,
       // The whole card opens the game. Screen readers use the buttons instead.
       child: InkWell(
+        borderRadius: radius,
         onTap: onOpen == null ? null : () => onOpen!(null),
         excludeFromSemantics: true,
-        child: Column(
-          children: [
-            if (!featured)
-              Row(
-                children: [
-                  Expanded(
-                    child: ColoredBox(
-                      color: away.color,
-                      child: const SizedBox(height: 5),
+        child: FCard(
+          clipBehavior: Clip.antiAlias,
+          style: .delta(
+            decoration: .boxDelta(
+              color: featured ? _ink : Colors.white,
+              borderRadius: radius,
+              border: Border.all(color: featured ? _ink : _border),
+            ),
+          ),
+          child: Column(
+            children: [
+              if (!featured)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ColoredBox(
+                        color: away.color,
+                        child: const SizedBox(height: 5),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ColoredBox(
-                      color: home.color,
-                      child: const SizedBox(height: 5),
+                    Expanded(
+                      child: ColoredBox(
+                        color: home.color,
+                        child: const SizedBox(height: 5),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            Padding(
-              padding: EdgeInsets.all(featured ? 18 : 12),
-              child: Column(
-                children: [
-                  Semantics(
-                    container: true,
-                    label: game.matchupDescription,
-                    child: ExcludeSemantics(
-                      child: Column(
-                        children: [
-                          if (featured && kickoff != null) ...[
-                            Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 8,
+                  ],
+                ),
+              Padding(
+                padding: EdgeInsets.all(featured ? 18 : 12),
+                child: Column(
+                  children: [
+                    Semantics(
+                      container: true,
+                      label: game.matchupDescription,
+                      child: ExcludeSemantics(
+                        child: Column(
+                          children: [
+                            if (featured && kickoff != null) ...[
+                              Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Text(
+                                    '${MaterialLocalizations.of(context).formatFullDate(kickoff).split(',').first.toUpperCase()} · NFL',
+                                    style: _type(
+                                      12,
+                                      800,
+                                      _yellow,
+                                    ).copyWith(letterSpacing: 1.2),
+                                  ),
+                                  StatusPill(
+                                    until == null || until.isNegative
+                                        ? 'Kickoff now'
+                                        : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
+                                    color: _lightMuted,
+                                    background: const Color(0xff493326),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '${MaterialLocalizations.of(context).formatFullDate(kickoff).split(',').first.toUpperCase()} · NFL',
-                                  style: _type(
-                                    12,
-                                    800,
-                                    _yellow,
-                                  ).copyWith(letterSpacing: 1.2),
+                                Expanded(
+                                  flex: 5,
+                                  child: away.badge(
+                                    foreground,
+                                    featured: featured,
+                                    won: game.winner == away.name,
+                                  ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xff493326),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.schedule,
-                                        size: 14,
-                                        color: _lightMuted,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          until == null || until.isNegative
-                                              ? 'Kickoff now'
-                                              : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
-                                          style: _type(11, 600, _lightMuted),
+                                Expanded(
+                                  flex: 4,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      left: 4,
+                                      right: 4,
+                                      top: featured ? 17 : 14,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          headline,
+                                          textAlign: TextAlign.center,
+                                          style: _type(
+                                            featured ? 34 : 18,
+                                            900,
+                                            foreground,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        if (caption != null)
+                                          Text(
+                                            caption,
+                                            textAlign: TextAlign.center,
+                                            style: _type(11, 600, muted),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 5,
+                                  child: home.badge(
+                                    foreground,
+                                    featured: featured,
+                                    won: game.winner == home.name,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
                           ],
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 5,
-                                child: away.badge(
-                                  foreground,
-                                  featured: featured,
-                                  won: game.winner == away.name,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 4,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left: 4,
-                                    right: 4,
-                                    top: featured ? 17 : 14,
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        headline,
-                                        textAlign: TextAlign.center,
-                                        style: _type(
-                                          featured ? 34 : 18,
-                                          900,
-                                          foreground,
-                                        ),
-                                      ),
-                                      if (caption != null)
-                                        Text(
-                                          caption,
-                                          textAlign: TextAlign.center,
-                                          style: _type(11, 600, muted),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 5,
-                                child: home.badge(
-                                  foreground,
-                                  featured: featured,
-                                  won: game.winner == home.name,
-                                ),
-                              ),
-                            ],
-                          ),
+                        ),
+                      ),
+                    ),
+                    if (closed != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        closed,
+                        textAlign: TextAlign.center,
+                        style: _type(12, 600, muted),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    if (!isFinal && (canOpenPick || pick != null))
+                      Row(
+                        children: [
+                          action(away),
+                          const SizedBox(width: 8),
+                          action(home),
                         ],
+                      )
+                    else
+                      FButton(
+                        variant: featured
+                            ? .secondary
+                            : isFinal
+                            ? .primary
+                            : .outline,
+                        size: .lg,
+                        onPress: onOpen == null ? null : () => onOpen!(null),
+                        child: ButtonLabel(isFinal ? 'See score' : 'View game'),
                       ),
-                    ),
-                  ),
-                  if (closed != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      closed,
-                      textAlign: TextAlign.center,
-                      style: _type(12, 600, muted),
-                    ),
                   ],
-                  const SizedBox(height: 14),
-                  if (!isFinal && (canOpenPick || pick != null))
-                    Row(
-                      children: [
-                        action(away),
-                        const SizedBox(width: 8),
-                        action(home),
-                      ],
-                    )
-                  else if (isFinal)
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: onOpen == null ? null : () => onOpen!(null),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: featured ? _yellow : _ink,
-                          foregroundColor: featured ? _ink : Colors.white,
-                          minimumSize: const Size(0, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'See score',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: onOpen == null ? null : () => onOpen!(null),
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(0, 44),
-                        ),
-                        child: Text(
-                          'View game',
-                          style: _type(13, 800, foreground),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// A small dot in the team's color, shown in its Pick button.
+class _TeamDot extends StatelessWidget {
+  const _TeamDot({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(
+      color: color,
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 1.5),
+    ),
+  );
 }
 
 class _Club {

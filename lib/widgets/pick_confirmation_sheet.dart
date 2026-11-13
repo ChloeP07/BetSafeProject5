@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../theme.dart';
+import 'shared.dart';
 import 'sports_ui.dart';
 
 /// Asks the player to confirm a pick before it is sent. Resolves to true only
@@ -14,13 +16,18 @@ Future<bool> showPickConfirmation(
   required int stake,
   required int coins,
 }) async {
-  final confirmed = await showModalBottomSheet<bool>(
+  final confirmed = await showFSheet<bool>(
     context: context,
-    isScrollControlled: true,
+    side: .btt,
     useSafeArea: true,
-    backgroundColor: BetSafeColors.paper,
-    builder: (_) =>
-        PickConfirmationSheet(team: team, stake: stake, coins: coins),
+    mainAxisMaxRatio: null,
+    builder: (_) => DecoratedBox(
+      decoration: const BoxDecoration(
+        color: BetSafeColors.paper,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: PickConfirmationSheet(team: team, stake: stake, coins: coins),
+    ),
   );
   return confirmed ?? false;
 }
@@ -135,22 +142,17 @@ class PickConfirmationSheet extends StatelessWidget {
                 style: TextStyle(color: BetSafeColors.muted, fontSize: 12),
               ),
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () => _close(context, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: BetSafeColors.green,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Confirm pick'),
+              FButton(
+                size: .lg,
+                onPress: () => _close(context, true),
+                child: const ButtonLabel('Confirm pick'),
               ),
               const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => _close(context, false),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: BetSafeColors.ink,
-                  side: const BorderSide(color: BetSafeColors.ink),
-                ),
-                child: const Text('Go back'),
+              FButton(
+                variant: .outline,
+                size: .lg,
+                onPress: () => _close(context, false),
+                child: const ButtonLabel('Go back'),
               ),
             ],
           ),

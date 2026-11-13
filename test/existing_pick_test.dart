@@ -35,8 +35,7 @@ void main() {
     json['picks'] = [pickJson(gameId: 'demo-1')];
     await api.refresh();
     await tester.pumpAndSettle();
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     expect(find.byType(GameScreen), findsNothing);
     expect(find.byType(PickScreen), findsNothing);
     expect(find.text('More this week'), findsOneWidget);
@@ -64,8 +63,7 @@ void main() {
     await lockInPick(tester);
     expect(find.text('Your pick: Buffalo Bills'), findsOneWidget);
     // One Back reaches the list. A second game view would still be in the way.
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     expect(find.text('More this week'), findsOneWidget);
     expect(find.byType(GameScreen), findsNothing);
   });

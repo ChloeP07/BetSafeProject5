@@ -4,8 +4,8 @@ import 'package:betsafeproject5/screens/game_screen.dart';
 import 'package:betsafeproject5/screens/pick_screen.dart';
 import 'package:betsafeproject5/widgets/pick_confirmation_sheet.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 
 import 'support/fixtures.dart';
@@ -61,10 +61,8 @@ void main() {
     expect(bills.selected, isTrue);
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Lock in pick'),
-          )
-          .onPressed,
+          .widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'))
+          .onPress,
       isNotNull,
     );
   });
@@ -103,8 +101,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PickScreen), findsNothing);
     expect(find.byType(GameScreen), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     expect(find.byType(GameScreen), findsNothing);
     expect(find.text('More this week'), findsOneWidget);
     expect(posts(requests), 0);

@@ -1,6 +1,6 @@
 import 'package:betsafeproject5/widgets/team_option_card.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 
 import 'support/fixtures.dart';
@@ -11,9 +11,8 @@ const warning =
 
 Map<String, dynamic> staleNfl() => {...nflOk(), 'stale': true};
 
-FilledButton lockIn(WidgetTester tester) => tester.widget<FilledButton>(
-  find.widgetWithText(FilledButton, 'Lock in pick'),
-);
+FButton lockIn(WidgetTester tester) =>
+    tester.widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'));
 
 Future<void> chooseBills(WidgetTester tester) async {
   await tester.tap(find.widgetWithText(TeamOptionCard, 'Buffalo Bills'));
@@ -26,7 +25,7 @@ void main() {
     await chooseBills(tester);
     expect(find.text(warning), findsOneWidget);
     expect(find.text('Refresh the NFL data to continue.'), findsOneWidget);
-    expect(lockIn(tester).onPressed, isNull);
+    expect(lockIn(tester).onPress, isNull);
   });
 
   testWidgets('a failed NFL feed also blocks the pick', (tester) async {
@@ -39,7 +38,7 @@ void main() {
     );
     await chooseBills(tester);
     expect(find.text(warning), findsOneWidget);
-    expect(lockIn(tester).onPressed, isNull);
+    expect(lockIn(tester).onPress, isNull);
   });
 
   testWidgets('a refresh that brings fresh data unblocks the pick', (
@@ -55,7 +54,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(requests.length, before + 1);
     expect(find.text(warning), findsNothing);
-    expect(lockIn(tester).onPressed, isNotNull);
+    expect(lockIn(tester).onPress, isNotNull);
   });
 
   testWidgets('demo games are not held up by stale NFL data', (tester) async {
@@ -66,6 +65,6 @@ void main() {
     await tester.pumpAndSettle();
     await chooseBills(tester);
     expect(find.text(warning), findsNothing);
-    expect(lockIn(tester).onPressed, isNotNull);
+    expect(lockIn(tester).onPress, isNotNull);
   });
 }

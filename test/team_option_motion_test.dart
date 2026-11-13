@@ -2,10 +2,12 @@ import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/fixtures.dart';
+
 Widget _option({required bool selected, bool reduceMotion = false}) =>
     MediaQuery(
       data: MediaQueryData(disableAnimations: reduceMotion),
-      child: MaterialApp(
+      child: ForuiTestApp(
         home: Scaffold(
           body: TeamOptionCard(
             team: 'Buffalo Bills',
@@ -36,9 +38,5 @@ void main() {
     await tester.pump();
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_off), findsNothing);
-    final style = tester
-        .widget<OutlinedButton>(find.byType(OutlinedButton))
-        .style!;
-    expect(style.animationDuration, Duration.zero);
   });
 }

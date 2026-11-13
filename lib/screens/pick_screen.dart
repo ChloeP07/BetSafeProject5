@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../models/game_status.dart';
 import '../models/nfl_teams.dart';
@@ -119,12 +120,16 @@ class _PickScreenState extends State<PickScreen> {
     final success = await widget.api.placePick(widget.gameId, chosen, stake);
     if (!mounted) return;
     if (success) {
-      // The app-wide messenger keeps the message up on the game view.
-      final messenger = ScaffoldMessenger.of(context);
-      _showGame();
-      messenger.showSnackBar(
-        SnackBar(content: Text(pickLockedMessage(chosen, stake))),
+      // A Forui toast. The toaster sits above every route, so the message stays
+      // up on the game view.
+      showFToast(
+        context: context,
+        // At the bottom, so it never covers the header's back button.
+        alignment: FToastAlignment.bottomCenter,
+        icon: const Icon(Icons.check_circle_outline),
+        title: Text(pickLockedMessage(chosen, stake)),
       );
+      _showGame();
     } else {
       setState(() {
         _sending = false;
@@ -142,23 +147,21 @@ class _PickScreenState extends State<PickScreen> {
       final state = api.state!;
       final game = state.gameById(widget.gameId);
       if (game == null) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Make your pick')),
-          body: SafeArea(
-            child: PageBody(
-              children: [
-                const EmptyMessage(
-                  title: 'This game is no longer available',
-                  message: 'It has dropped off the schedule, so there is nothing to pick here.',
-                  icon: Icons.event_busy,
-                ),
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Back to games'),
-                ),
-              ],
+        return DetailPage(
+          title: 'Make your pick',
+          children: [
+            const EmptyMessage(
+              title: 'This game is no longer available',
+              message: 'It has dropped off the schedule, so there is nothing to pick here.',
+              icon: Icons.event_busy,
             ),
-          ),
+            FButton(
+              variant: .outline,
+              size: .lg,
+              onPress: () => Navigator.of(context).pop(),
+              child: const ButtonLabel('Back to games'),
+            ),
+          ],
         );
       }
       final text = Theme.of(context).textTheme;
@@ -191,194 +194,185 @@ class _PickScreenState extends State<PickScreen> {
         });
       }
       final locked = api.busy || picked || !game.canPick;
-      return Scaffold(
-        appBar: AppBar(title: const Text('Make your pick')),
-        body: SafeArea(
-          child: PageBody(
-            children: [
-              MatchTicket(
-                game: game,
-                color: BetSafeColors.soft,
-                selectedTeam: team,
-                onTeamTap: locked ? null : _choose,
-              ),
-              if (game.closedReason case final reason?) ...[
-                const SizedBox(height: 16),
-                _ClosedNotice(
-                  reason: reason,
-                  onBack: () => Navigator.of(context).pop(),
+      return DetailPage(
+        title: 'Make your pick',
+        children: [
+          MatchTicket(
+            game: game,
+            color: BetSafeColors.soft,
+            selectedTeam: team,
+            onTeamTap: locked ? null : _choose,
+          ),
+          if (game.closedReason case final reason?) ...[
+            const SizedBox(height: 16),
+            _ClosedNotice(
+              reason: reason,
+              onBack: () => Navigator.of(context).pop(),
+            ),
+          ] else if (block == PickBlock.staleData) ...[
+            const SizedBox(height: 16),
+            _StaleDataNotice(onRefresh: api.busy ? null : api.refresh),
+          ],
+          const SizedBox(height: 28),
+          Text(
+            'Who takes the win?',
+            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          const Text('Choose your team. Keep it virtual.'),
+          if (!game.isSimulation) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              ] else if (block == PickBlock.staleData) ...[
-                const SizedBox(height: 16),
-                _StaleDataNotice(onRefresh: api.busy ? null : api.refresh),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Picks close at kickoff.', style: text.bodySmall),
+                ),
               ],
-              const SizedBox(height: 28),
-              Text(
-                'Who takes the win?',
-                style: text.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+            ),
+          ],
+          const SizedBox(height: 16),
+          for (final (option, side) in [
+            (game.away, 'Away team'),
+            (game.home, 'Home team'),
+          ])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TeamOptionCard(
+                team: option,
+                side: side,
+                selected: team == option,
+                onTap: locked ? null : () => _choose(option),
+              ),
+            ),
+          if (team case final chosen?)
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: Text(
+                'You’re backing the ${teamShortName(chosen)}',
+                style: text.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text('Choose your team. Keep it virtual.'),
-              if (!game.isSimulation) ...[
-                const SizedBox(height: 8),
-                Row(
+            ),
+          const SizedBox(height: 16),
+          Text(
+            'Your stake',
+            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          StakeSelector(
+            selected: stake,
+            onChanged: locked
+                ? null
+                : (value) {
+                    _clearSubmissionError();
+                    setState(() => _chosenStake = value);
+                  },
+            isAllowed: (value) => canAffordStake(
+              value,
+              coins: state.coins,
+              dailyRemaining: state.dailyRemaining,
+            ),
+            caption: stakeCaption(
+              coins: state.coins,
+              dailyRemaining: state.dailyRemaining,
+            ),
+          ),
+          if (stake != null) ...[
+            const SizedBox(height: 20),
+            SportsPanel(
+              color: BetSafeColors.mint,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'If your team wins',
+                    style: TextStyle(color: BetSafeColors.green),
+                  ),
+                  const SizedBox(height: 8),
+                  PayoutFigure(
+                    coins: stake * 2,
+                    style: text.headlineSmall?.copyWith(
+                      color: BetSafeColors.green,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
+                    style: const TextStyle(
+                      color: BetSafeColors.muted,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          SportsPanel(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BalancePreview(coins: state.coins, stake: stake),
+                const SizedBox(height: 12),
+                DailyLimitBar(
+                  remaining: state.dailyRemaining,
+                  limit: state.dailyLimit,
+                ),
+              ],
+            ),
+          ),
+          if (stakeMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Semantics(
+                container: true,
+                liveRegion: true,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      Icons.schedule,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
+                      Icons.info_outline,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Picks close at kickoff.',
-                        style: text.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 16),
-              for (final (option, side) in [
-                (game.away, 'Away team'),
-                (game.home, 'Home team'),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TeamOptionCard(
-                    team: option,
-                    side: side,
-                    selected: team == option,
-                    onTap: locked ? null : () => _choose(option),
-                  ),
-                ),
-              if (team case final chosen?)
-                Semantics(
-                  container: true,
-                  liveRegion: true,
-                  child: Text(
-                    'You’re backing the ${teamShortName(chosen)}',
-                    style: text.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Text(
-                'Your stake',
-                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 12),
-              StakeSelector(
-                selected: stake,
-                onChanged: locked
-                    ? null
-                    : (value) {
-                        _clearSubmissionError();
-                        setState(() => _chosenStake = value);
-                      },
-                isAllowed: (value) => canAffordStake(
-                  value,
-                  coins: state.coins,
-                  dailyRemaining: state.dailyRemaining,
-                ),
-                caption: stakeCaption(
-                  coins: state.coins,
-                  dailyRemaining: state.dailyRemaining,
-                ),
-              ),
-              if (stake != null) ...[
-                const SizedBox(height: 20),
-                SportsPanel(
-                  color: BetSafeColors.mint,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'If your team wins',
-                        style: TextStyle(color: BetSafeColors.green),
-                      ),
-                      const SizedBox(height: 8),
-                      PayoutFigure(
-                        coins: stake * 2,
-                        style: text.headlineSmall?.copyWith(
-                          color: BetSafeColors.green,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
-                        style: const TextStyle(
-                          color: BetSafeColors.muted,
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              SportsPanel(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    BalancePreview(coins: state.coins, stake: stake),
-                    const SizedBox(height: 12),
-                    DailyLimitBar(
-                      remaining: state.dailyRemaining,
-                      limit: state.dailyLimit,
-                    ),
+                    Expanded(child: Text(stakeMessage)),
                   ],
                 ),
               ),
-              if (stakeMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Semantics(
-                    container: true,
-                    liveRegion: true,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(stakeMessage)),
-                      ],
-                    ),
-                  ),
-                ),
-              if (api.error != null)
-                ServerError(
-                  message: friendlyPickError(api.error!),
-                  onRetry: api.busy ? null : () => api.refresh(),
-                ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed:
-                    api.busy || _leaving || block != null || stake == null
-                    ? null
-                    : () => _lockIn(stake),
-                child: _sending
-                    ? const _SavingLabel()
-                    : const Text('Lock in pick'),
-              ),
-              if (api.busy ? null : lockInHint(block) case final hint?) ...[
-                const SizedBox(height: 8),
-                Text(hint, textAlign: TextAlign.center, style: text.bodySmall),
-              ],
-            ],
+            ),
+          if (api.error != null)
+            ServerError(
+              message: friendlyPickError(api.error!),
+              onRetry: api.busy ? null : () => api.refresh(),
+            ),
+          const SizedBox(height: 24),
+          FButton(
+            size: .lg,
+            onPress: api.busy || _leaving || block != null || stake == null
+                ? null
+                : () => _lockIn(stake),
+            child: _sending
+                ? const _SavingLabel()
+                : const ButtonLabel('Lock in pick'),
           ),
-        ),
+          if (api.busy ? null : lockInHint(block) case final hint?) ...[
+            const SizedBox(height: 8),
+            Text(hint, textAlign: TextAlign.center, style: text.bodySmall),
+          ],
+        ],
       );
     },
   );
@@ -388,19 +382,15 @@ class _PickScreenState extends State<PickScreen> {
 class _SavingLabel extends StatelessWidget {
   const _SavingLabel();
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      SizedBox.square(
-        dimension: 18,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: DefaultTextStyle.of(context).style.color,
-        ),
-      ),
-      const SizedBox(width: 12),
-      const Flexible(child: Text('Saving pick…')),
-    ],
+  Widget build(BuildContext context) => Flexible(
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const FCircularProgress(semanticsLabel: 'Saving'),
+        const SizedBox(width: 12),
+        const Flexible(child: Text('Saving pick…')),
+      ],
+    ),
   );
 }
 
@@ -409,39 +399,24 @@ class _StaleDataNotice extends StatelessWidget {
   const _StaleDataNotice({required this.onRefresh});
   final VoidCallback? onRefresh;
   @override
-  Widget build(BuildContext context) => Semantics(
-    container: true,
-    liveRegion: true,
-    child: SportsPanel(
-      color: BetSafeColors.soft,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.cloud_off, size: 18, color: BetSafeColors.ink),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'The NFL data may be out of date, so NFL picks are paused '
-                  'until a refresh works.',
-                ),
-              ),
-            ],
-          ),
-          TextButton(
-            onPressed: onRefresh,
-            style: TextButton.styleFrom(
-              foregroundColor: BetSafeColors.ink,
-              minimumSize: const Size(48, 48),
-            ),
-            child: const Text('Refresh NFL data'),
-          ),
-        ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const FAlert(
+        icon: Icon(Icons.cloud_off),
+        title: Text(
+          'The NFL data may be out of date, so NFL picks are paused '
+          'until a refresh works.',
+        ),
       ),
-    ),
+      const SizedBox(height: 8),
+      FButton(
+        variant: .outline,
+        size: .lg,
+        onPress: onRefresh,
+        child: const ButtonLabel('Refresh NFL data'),
+      ),
+    ],
   );
 }
 
@@ -451,30 +426,17 @@ class _ClosedNotice extends StatelessWidget {
   final String reason;
   final VoidCallback onBack;
   @override
-  Widget build(BuildContext context) => Semantics(
-    container: true,
-    liveRegion: true,
-    child: SportsPanel(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.lock_outline, size: 18),
-              const SizedBox(width: 8),
-              Expanded(child: Text(reason)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onBack,
-            style: OutlinedButton.styleFrom(foregroundColor: BetSafeColors.ink),
-            child: const Text('Back to games'),
-          ),
-        ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      FAlert(icon: const Icon(Icons.lock_outline), title: Text(reason)),
+      const SizedBox(height: 8),
+      FButton(
+        variant: .outline,
+        size: .lg,
+        onPress: onBack,
+        child: const ButtonLabel('Back to games'),
       ),
-    ),
+    ],
   );
 }

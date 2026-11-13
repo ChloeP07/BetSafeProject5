@@ -8,6 +8,7 @@ import 'package:betsafeproject5/widgets/pick_confirmation_sheet.dart';
 import 'package:betsafeproject5/widgets/team_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -93,8 +94,7 @@ void main() {
     expect(find.text('Pick locked: Bills · 250 coins'), findsOneWidget);
 
     // Back on Games, the server's new figures and the pick show.
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
     expect(find.text('750'), findsOneWidget);
     expect(find.text('250 left today'), findsOneWidget);
     expect(find.text('BUF picked'), findsOneWidget);
@@ -137,8 +137,7 @@ void main() {
       findsOneWidget,
     );
     await lockInPick(tester);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
+    await goBack(tester);
 
     // The limit is now used up, and Games says so.
     expect(find.textContaining('You’ve used all of today’s'), findsOneWidget);
@@ -147,10 +146,8 @@ void main() {
     expect(find.text('No stake fits right now.'), findsOneWidget);
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Lock in pick'),
-          )
-          .onPressed,
+          .widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'))
+          .onPress,
       isNull,
     );
     expect(posts, hasLength(1));

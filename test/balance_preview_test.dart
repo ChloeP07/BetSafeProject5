@@ -7,7 +7,7 @@ import 'support/fixtures.dart';
 void main() {
   testWidgets('shows the balance before and after the stake', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      const ForuiTestApp(
         home: Scaffold(body: BalancePreview(coins: 1000, stake: 250)),
       ),
     );
@@ -18,7 +18,7 @@ void main() {
 
   testWidgets('with no stake, shows only the balance now', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      const ForuiTestApp(
         home: Scaffold(body: BalancePreview(coins: 30, stake: null)),
       ),
     );
