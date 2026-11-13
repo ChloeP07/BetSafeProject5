@@ -6,6 +6,7 @@ import '../models/game_status.dart';
 import '../models/game_time.dart';
 import '../models/nfl_teams.dart';
 import '../theme.dart';
+import 'glass.dart';
 
 /// The team's abbreviation: the server's when it sends one, then the known
 /// NFL code, then the name's initials ("?" for a blank name).
@@ -26,11 +27,20 @@ class TeamBadge extends StatelessWidget {
     this.code,
     this.logoUrl,
     this.ring = BetSafeColors.yellow,
+    this.heroTag,
   });
   final String team;
   final double size;
   final String? code, logoUrl;
   final Color ring;
+
+  /// When set, the badge flies between pages that show the same team of the
+  /// same game, such as from a game card to its pick page.
+  final Object? heroTag;
+
+  /// The hero tag for one side of a game, shared by every page that shows it.
+  static String heroFor(Game game, {required bool home}) =>
+      'team-${game.id}-${home ? 'home' : 'away'}';
 
   factory TeamBadge.forGame(
     Game game, {
@@ -41,6 +51,7 @@ class TeamBadge extends StatelessWidget {
     code: home ? game.homeAbbreviation : game.awayAbbreviation,
     logoUrl: home ? game.homeLogoUrl : game.awayLogoUrl,
     size: size,
+    heroTag: heroFor(game, home: home),
   );
 
   @override
@@ -90,7 +101,7 @@ class TeamBadge extends StatelessWidget {
         ),
       ],
     );
-    return Semantics(
+    final badge = Semantics(
       label: team,
       image: true,
       child: ExcludeSemantics(
@@ -116,6 +127,7 @@ class TeamBadge extends StatelessWidget {
         ),
       ),
     );
+    return heroTag == null ? badge : Hero(tag: heroTag!, child: badge);
   }
 }
 
@@ -191,7 +203,7 @@ class GameStatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, background) = switch (game.tone) {
       GameTone.open => (BetSafeColors.green, BetSafeColors.mint),
-      GameTone.live => (BetSafeColors.ink, BetSafeColors.yellow),
+      GameTone.live => (BetSafeColors.onAccent, BetSafeColors.yellow),
       GameTone.waiting => (BetSafeColors.lossInk, BetSafeColors.loss),
       GameTone.finished => (BetSafeColors.muted, BetSafeColors.soft),
     };
@@ -199,6 +211,8 @@ class GameStatusPill extends StatelessWidget {
   }
 }
 
+/// A frosted-glass panel. White (the default) or [BetSafeColors.soft] is
+/// plain glass; any other [color] tints it, such as mint for a win.
 class SportsPanel extends StatelessWidget {
   const SportsPanel({
     super.key,
@@ -215,41 +229,13 @@ class SportsPanel extends StatelessWidget {
   /// panel needs its own button for the same action.
   final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(24);
-    final content = DefaultTextStyle.merge(
-      style: const TextStyle(color: BetSafeColors.ink),
-      child: IconTheme(
-        data: const IconThemeData(color: BetSafeColors.ink),
-        child: child,
-      ),
-    );
-    if (onTap == null) {
-      // A Forui card in this panel's color. FCard adds no padding of its own.
-      return FCard(
-        style: .delta(
-          decoration: .boxDelta(
-            color: color,
-            borderRadius: radius,
-            border: Border.all(
-              color: color == Colors.white ? const Color(0xFFE2DCD2) : color,
-            ),
-          ),
-        ),
-        child: Padding(padding: padding, child: content),
-      );
-    }
-    return Material(
-      color: color,
-      borderRadius: radius,
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onTap,
-        excludeFromSemantics: true,
-        child: Padding(padding: padding, child: content),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => GlassPanel(
+    radius: 24,
+    padding: padding,
+    tint: color == Colors.white || color == BetSafeColors.soft ? null : color,
+    onTap: onTap,
+    child: child,
+  );
 }
 
 class MatchTicket extends StatelessWidget {
@@ -415,7 +401,7 @@ class MatchTicket extends StatelessWidget {
           ),
           if (footer != null) ...[
             const SizedBox(height: 20),
-            const Divider(height: 1, color: Color(0x22302419)),
+            const Divider(height: 1, color: BetSafeColors.line),
             const SizedBox(height: 16),
             footer!,
           ],
@@ -512,7 +498,7 @@ class FieldArtwork extends StatelessWidget {
               child: Icon(
                 Icons.sports_football,
                 size: 48,
-                color: BetSafeColors.soft,
+                color: Color(0xFFF3F0EA),
               ),
             ),
           ),
@@ -525,9 +511,12 @@ class FieldArtwork extends StatelessWidget {
 class _FieldPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = BetSafeColors.green);
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFF245B43),
+    );
     final paint = Paint()
-      ..color = BetSafeColors.mint.withValues(alpha: .35)
+      ..color = const Color(0x59DCEACD)
       ..strokeWidth = 1;
     for (double y = 12; y < size.height; y += 26) {
       canvas.drawLine(Offset(10, y), Offset(size.width - 10, y), paint);

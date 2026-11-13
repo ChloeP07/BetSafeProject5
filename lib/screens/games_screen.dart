@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:forui/forui.dart';
 
 import '../models/demo_state.dart';
@@ -10,6 +11,8 @@ import '../models/game_time.dart';
 import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/glass.dart';
+import '../widgets/motion.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 import 'game_screen.dart';
@@ -17,10 +20,7 @@ import 'pick_screen.dart';
 
 const _ink = BetSafeColors.ink;
 const _yellow = BetSafeColors.yellow;
-const _paper = BetSafeColors.paper;
 const _muted = BetSafeColors.muted;
-const _lightMuted = Color(0xffcfc9be);
-const _border = Color(0xFFE2DCD2);
 
 TextStyle _type(double size, double weight, [Color color = _ink]) => TextStyle(
   fontFamily: 'Inter',
@@ -144,15 +144,19 @@ class _GamesScreenState extends State<GamesScreen> {
       onOpen: api.busy ? null : (team) => _open(game, team: team),
     );
 
-    return ColoredBox(
-      color: _paper,
-      child: RefreshIndicator(
-        color: _ink,
-        onRefresh: api.refresh,
-        child: PageBody(
-          children: [
-            // At large text sizes the coin chip moves below the greeting
-            // instead of pushing it off the screen.
+    // Each block rises in after the one above it.
+    var order = 0;
+    Widget enter(Widget child) => Enter(index: order++, child: child);
+
+    return RefreshIndicator(
+      color: BetSafeColors.onAccent,
+      backgroundColor: _yellow,
+      onRefresh: api.refresh,
+      child: PageBody(
+        children: [
+          // At large text sizes the coin chip moves below the greeting
+          // instead of pushing it off the screen.
+          enter(
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -189,15 +193,17 @@ class _GamesScreenState extends State<GamesScreen> {
                 _CoinChip(state: state),
               ],
             ),
-            if (walletNotice != null) ...[
-              const SizedBox(height: 12),
-              _Notice(icon: Icons.info_outline, message: walletNotice),
-            ],
-            if (!isDemo && featured != null) ...[
-              const SizedBox(height: 18),
-              ticket(featured, hero: true),
-            ],
-            const SizedBox(height: 22),
+          ),
+          if (walletNotice != null) ...[
+            const SizedBox(height: 12),
+            _Notice(icon: Icons.info_outline, message: walletNotice),
+          ],
+          if (!isDemo && featured != null) ...[
+            const SizedBox(height: 18),
+            enter(ticket(featured, hero: true)),
+          ],
+          const SizedBox(height: 22),
+          enter(
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -212,7 +218,9 @@ class _GamesScreenState extends State<GamesScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
+          enter(
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -232,25 +240,27 @@ class _GamesScreenState extends State<GamesScreen> {
                 ],
               ),
             ),
-            if (!isDemo && state.nfl.hasProblem) ...[
-              const SizedBox(height: 12),
-              _Notice(
-                icon: Icons.cloud_off,
-                message:
-                    state.nfl.description ??
-                    'Scores may be out of date. Try refreshing.',
-                action: 'Try again',
-                onAction: api.busy ? null : api.refresh,
-              ),
-            ] else if (isDemo) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Simulation · sample games, scores and payouts.',
-                style: _type(12, 600, _muted),
-              ),
-            ],
-            if (listGames.isNotEmpty) ...[
-              const SizedBox(height: 14),
+          ),
+          if (!isDemo && state.nfl.hasProblem) ...[
+            const SizedBox(height: 12),
+            _Notice(
+              icon: Icons.cloud_off,
+              message:
+                  state.nfl.description ??
+                  'Scores may be out of date. Try refreshing.',
+              action: 'Try again',
+              onAction: api.busy ? null : api.refresh,
+            ),
+          ] else if (isDemo) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Simulation · sample games, scores and payouts.',
+              style: _type(12, 600, _muted),
+            ),
+          ],
+          if (listGames.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            enter(
               FTextField(
                 control: .managed(
                   controller: search,
@@ -264,7 +274,9 @@ class _GamesScreenState extends State<GamesScreen> {
                 ),
                 clearable: (value) => value.text.isNotEmpty,
               ),
-              const SizedBox(height: 10),
+            ),
+            const SizedBox(height: 10),
+            enter(
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -279,96 +291,96 @@ class _GamesScreenState extends State<GamesScreen> {
                     ),
                 ],
               ),
-              if (summary.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(summary, style: _type(12, 600, _muted)),
-              ],
+            ),
+            if (summary.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(summary, style: _type(12, 600, _muted)),
             ],
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: _yellow,
-                borderRadius: BorderRadius.circular(26),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (listGames.isEmpty)
-                    _EmptyList(
-                      title: isDemo
-                          ? 'No demo games available'
-                          : featured == null
-                          ? 'No NFL games available'
-                          : 'No more games this week',
-                      message: isDemo
-                          ? 'Restart the demo server to bring back the sample games.'
-                          : 'Pull down to refresh, or choose Demo to try the full pick flow.',
-                    )
-                  else if (shown.isEmpty)
-                    _EmptyList(
-                      title: 'No games match',
-                      message: 'Try a different team or filter, or clear them to see every game.',
-                      action: 'Clear filters',
-                      onAction: _clearFilters,
-                    ),
-                  for (final (index, section) in sections.indexed) ...[
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        6,
-                        index == 0 ? 2 : 14,
-                        0,
-                        8,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Semantics(
-                              header: true,
-                              child: Text(section.title, style: _type(15, 800)),
-                            ),
+          ],
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (listGames.isEmpty)
+                  _EmptyList(
+                    title: isDemo
+                        ? 'No demo games available'
+                        : featured == null
+                        ? 'No NFL games available'
+                        : 'No more games this week',
+                    message: isDemo
+                        ? 'Restart the demo server to bring back the sample games.'
+                        : 'Pull down to refresh, or choose Demo to try the full pick flow.',
+                  )
+                else if (shown.isEmpty)
+                  _EmptyList(
+                    title: 'No games match',
+                    message: 'Try a different team or filter, or clear them to see every game.',
+                    action: 'Clear filters',
+                    onAction: _clearFilters,
+                  ),
+                for (final (index, section) in sections.indexed) ...[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(6, index == 0 ? 2 : 14, 0, 8),
+                    child: Row(
+                      children: [
+                        // project05's pulse animation marks live games.
+                        if (section.tone == GameTone.live) ...const [
+                          GlassLottie('pulse', size: 28, loops: 3),
+                          SizedBox(width: 4),
+                        ],
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: Text(section.title, style: _type(16, 800)),
                           ),
-                          if (canCollapse && section.tone == GameTone.finished)
-                            // Flexible, so at large text sizes the label wraps
-                            // instead of pushing the button off the screen.
-                            Flexible(
-                              child: FButton(
-                                variant: .ghost,
-                                size: .lg,
-                                mainAxisSize: .min,
-                                onPress: () => setState(
-                                  () => showFinished = !showFinished,
-                                ),
-                                child: ButtonLabel(
-                                  showFinished
-                                      ? 'Hide'
-                                      : 'Show ${gameCountLabel(section.games.length)}',
-                                ),
+                        ),
+                        if (canCollapse && section.tone == GameTone.finished)
+                          // Flexible, so at large text sizes the label wraps
+                          // instead of pushing the button off the screen.
+                          Flexible(
+                            child: FButton(
+                              variant: .ghost,
+                              size: .lg,
+                              mainAxisSize: .min,
+                              onPress: () =>
+                                  setState(() => showFinished = !showFinished),
+                              child: ButtonLabel(
+                                showFinished
+                                    ? 'Hide'
+                                    : 'Show ${gameCountLabel(section.games.length)}',
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-                    if (!canCollapse ||
-                        showFinished ||
-                        section.tone != GameTone.finished)
-                      for (final (gameIndex, game)
-                          in section.games.indexed) ...[
-                        if (gameIndex > 0) const SizedBox(height: 10),
-                        ticket(game),
+                          ),
                       ],
-                  ],
+                    ),
+                  ),
+                  if (!canCollapse ||
+                      showFinished ||
+                      section.tone != GameTone.finished)
+                    for (final (gameIndex, game) in section.games.indexed) ...[
+                      if (gameIndex > 0) const SizedBox(height: 12),
+                      // Keyed by game, so a card that a filter or search
+                      // brings in rises in too.
+                      Enter(
+                        key: ValueKey('card-${game.id}'),
+                        index: gameIndex,
+                        child: ticket(game),
+                      ),
+                    ],
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No deposits. No cash-outs. Collectibles have no cash value.',
-              textAlign: TextAlign.center,
-              style: _type(11, 600, _muted),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No deposits. No cash-outs. Collectibles have no cash value.',
+            textAlign: TextAlign.center,
+            style: _type(11, 600, _muted),
+          ),
+        ],
       ),
     );
   }
@@ -447,9 +459,9 @@ class _EmptyList extends StatelessWidget {
   final VoidCallback? onAction;
 
   @override
-  Widget build(BuildContext context) => FCard(
+  Widget build(BuildContext context) => GlassPanel(
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -475,13 +487,27 @@ class _CoinChip extends StatelessWidget {
     final progress = state.dailyLimit > 0
         ? (state.dailyRemaining / state.dailyLimit).clamp(0.0, 1.0)
         : 0.0;
-    return Container(
-      constraints: const BoxConstraints(minHeight: 42),
+    // The balance drops into place whenever it changes.
+    Widget coins = Text(
+      MaterialLocalizations.of(context).formatDecimal(state.coins),
+      style: _type(15, 800, Colors.white),
+      semanticsLabel: '${state.coins} virtual coins',
+    );
+    if (Motion.on(context)) {
+      coins = coins
+          .animate(key: ValueKey(state.coins))
+          .fadeIn(duration: 250.ms)
+          .slideY(
+            begin: -.6,
+            end: 0,
+            duration: 450.ms,
+            curve: Curves.easeOutBack,
+          );
+    }
+    return GlassPanel(
+      radius: 24,
+      strong: true,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: _ink,
-        borderRadius: BorderRadius.circular(24),
-      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -493,7 +519,7 @@ class _CoinChip extends StatelessWidget {
                 CircularProgressIndicator(
                   value: progress,
                   color: _yellow,
-                  backgroundColor: const Color(0xff695043),
+                  backgroundColor: BetSafeColors.line,
                   strokeWidth: 2,
                 ),
                 const Icon(Icons.toll_outlined, color: _yellow, size: 16),
@@ -505,14 +531,10 @@ class _CoinChip extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  MaterialLocalizations.of(context).formatDecimal(state.coins),
-                  style: _type(15, 800, Colors.white),
-                  semanticsLabel: '${state.coins} virtual coins',
-                ),
+                coins,
                 Text(
                   '${state.dailyRemaining} left today',
-                  style: _type(11, 600, _lightMuted),
+                  style: _type(11, 600, _muted),
                 ),
               ],
             ),
@@ -548,14 +570,14 @@ class _GameCard extends StatelessWidget {
               .formatTimeOfDay(TimeOfDay.fromDateTime(kickoff));
     final timeParts = time?.split(' ');
     final until = kickoff?.difference(now);
-    final foreground = featured ? Colors.white : _ink;
-    final muted = featured ? _lightMuted : _muted;
+    const foreground = _ink;
+    const muted = _muted;
     final canOpenPick = game.canPick && pick == null;
     final isFinal = game.status == 'final';
     final isLive = game.status == 'live';
     final hasScore = game.awayScore != null && game.homeScore != null;
     final closed = pick == null && !isFinal ? game.closedReason : null;
-    final radius = BorderRadius.circular(featured ? 28 : 18);
+    final radius = featured ? 28.0 : 20.0;
 
     // The big middle line: a score once there is one, otherwise the kickoff.
     final headline = isFinal
@@ -575,12 +597,13 @@ class _GameCard extends StatelessWidget {
               : timeParts!.last)
         : null;
 
-    // On the dark featured card, buttons use the yellow accent.
+    // Picks on the featured card, and a team already picked, take the yellow
+    // accent; other cards use purple.
     Widget action(_Club club) {
       final picked = pick?.team == club.name;
       return Expanded(
         child: FButton(
-          variant: picked || featured ? .secondary : .primary,
+          variant: picked || featured ? .primary : .secondary,
           size: .lg,
           onPress: onOpen == null || (!canOpenPick && !picked)
               ? null
@@ -595,165 +618,162 @@ class _GameCard extends StatelessWidget {
       );
     }
 
-    return Material(
-      type: MaterialType.transparency,
-      // The whole card opens the game. Screen readers use the buttons instead.
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onOpen == null ? null : () => onOpen!(null),
-        excludeFromSemantics: true,
-        child: FCard(
-          clipBehavior: Clip.antiAlias,
-          style: .delta(
-            decoration: .boxDelta(
-              color: featured ? _ink : Colors.white,
-              borderRadius: radius,
-              border: Border.all(color: featured ? _ink : _border),
-            ),
-          ),
-          child: Column(
-            children: [
-              if (!featured)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ColoredBox(
-                        color: away.color,
-                        child: const SizedBox(height: 5),
-                      ),
-                    ),
-                    Expanded(
-                      child: ColoredBox(
-                        color: home.color,
-                        child: const SizedBox(height: 5),
-                      ),
-                    ),
-                  ],
+    // A glass card; the featured one is brighter and tinted purple. The whole
+    // card opens the game. Screen readers use the buttons instead.
+    return GlassPanel(
+      radius: radius,
+      padding: EdgeInsets.zero,
+      strong: featured,
+      tint: featured ? BetSafeColors.purple : null,
+      onTap: onOpen == null ? null : () => onOpen!(null),
+      child: Column(
+        children: [
+          if (!featured)
+            Row(
+              children: [
+                Expanded(
+                  child: ColoredBox(
+                    color: away.color,
+                    child: const SizedBox(height: 5),
+                  ),
                 ),
-              Padding(
-                padding: EdgeInsets.all(featured ? 18 : 12),
-                child: Column(
-                  children: [
-                    Semantics(
-                      container: true,
-                      label: game.matchupDescription,
-                      child: ExcludeSemantics(
-                        child: Column(
-                          children: [
-                            if (featured && kickoff != null) ...[
-                              Wrap(
-                                alignment: WrapAlignment.spaceBetween,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  Text(
-                                    '${MaterialLocalizations.of(context).formatFullDate(kickoff).split(',').first.toUpperCase()} · NFL',
-                                    style: _type(
-                                      12,
-                                      800,
-                                      _yellow,
-                                    ).copyWith(letterSpacing: 1.2),
-                                  ),
-                                  StatusPill(
-                                    until == null || until.isNegative
-                                        ? 'Kickoff now'
-                                        : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
-                                    color: _lightMuted,
-                                    background: const Color(0xff493326),
-                                  ),
-                                ],
+                Expanded(
+                  child: ColoredBox(
+                    color: home.color,
+                    child: const SizedBox(height: 5),
+                  ),
+                ),
+              ],
+            ),
+          Padding(
+            padding: EdgeInsets.all(featured ? 18 : 12),
+            child: Column(
+              children: [
+                Semantics(
+                  container: true,
+                  label: game.matchupDescription,
+                  child: ExcludeSemantics(
+                    child: Column(
+                      children: [
+                        if (featured && kickoff != null) ...[
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Text(
+                                '${MaterialLocalizations.of(context).formatFullDate(kickoff).split(',').first.toUpperCase()} · NFL',
+                                style: _type(
+                                  12,
+                                  800,
+                                  _yellow,
+                                ).copyWith(letterSpacing: 1.2),
                               ),
-                              const SizedBox(height: 16),
+                              StatusPill(
+                                until == null || until.isNegative
+                                    ? 'Kickoff now'
+                                    : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
+                                color: _ink,
+                                background: BetSafeColors.soft,
+                              ),
                             ],
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: away.badge(
-                                    foreground,
-                                    featured: featured,
-                                    won: game.winner == away.name,
-                                  ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: away.badge(
+                                foreground,
+                                featured: featured,
+                                won: game.winner == away.name,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 4,
+                                  right: 4,
+                                  top: featured ? 17 : 14,
                                 ),
-                                Expanded(
-                                  flex: 4,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                      left: 4,
-                                      right: 4,
-                                      top: featured ? 17 : 14,
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      headline,
+                                      textAlign: TextAlign.center,
+                                      style: _type(
+                                        featured ? 34 : 18,
+                                        900,
+                                        foreground,
+                                      ),
                                     ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          headline,
-                                          textAlign: TextAlign.center,
-                                          style: _type(
-                                            featured ? 34 : 18,
-                                            900,
-                                            foreground,
-                                          ),
-                                        ),
-                                        if (caption != null)
-                                          Text(
-                                            caption,
-                                            textAlign: TextAlign.center,
-                                            style: _type(11, 600, muted),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
+                                    if (caption != null)
+                                      Text(
+                                        caption,
+                                        textAlign: TextAlign.center,
+                                        style: _type(11, 600, muted),
+                                      ),
+                                  ],
                                 ),
-                                Expanded(
-                                  flex: 5,
-                                  child: home.badge(
-                                    foreground,
-                                    featured: featured,
-                                    won: game.winner == home.name,
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 5,
+                              child: home.badge(
+                                foreground,
+                                featured: featured,
+                                won: game.winner == home.name,
+                              ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                    if (closed != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        closed,
-                        textAlign: TextAlign.center,
-                        style: _type(12, 600, muted),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    if (!isFinal && (canOpenPick || pick != null))
-                      Row(
-                        children: [
-                          action(away),
-                          const SizedBox(width: 8),
-                          action(home),
-                        ],
-                      )
-                    else
-                      FButton(
-                        variant: featured
-                            ? .secondary
-                            : isFinal
-                            ? .primary
-                            : .outline,
-                        size: .lg,
-                        onPress: onOpen == null ? null : () => onOpen!(null),
-                        child: ButtonLabel(isFinal ? 'See score' : 'View game'),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                if (closed != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    closed,
+                    textAlign: TextAlign.center,
+                    style: _type(12, 600, muted),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                if (!isFinal && (canOpenPick || pick != null))
+                  // A light sweeps across the featured picks once.
+                  Sweep(
+                    trigger: featured ? game.id : null,
+                    color: featured
+                        ? const Color(0x88FFFFFF)
+                        : Colors.transparent,
+                    child: Row(
+                      children: [
+                        action(away),
+                        const SizedBox(width: 8),
+                        action(home),
+                      ],
+                    ),
+                  )
+                else
+                  FButton(
+                    variant: featured
+                        ? .primary
+                        : isFinal
+                        ? .secondary
+                        : .outline,
+                    size: .lg,
+                    onPress: onOpen == null ? null : () => onOpen!(null),
+                    child: ButtonLabel(isFinal ? 'See score' : 'View game'),
+                  ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -776,10 +796,13 @@ class _TeamDot extends StatelessWidget {
 }
 
 class _Club {
-  const _Club(this.name, this.code, this.color, this.logo);
+  const _Club(this.name, this.code, this.color, this.logo, this.heroTag);
   final String name, code;
   final Color color;
   final String? logo;
+
+  /// Shared with the game's other pages, so the badge flies between them.
+  final String heroTag;
 
   factory _Club.fromGame(Game game, {required bool home}) {
     final name = home ? game.home : game.away;
@@ -788,6 +811,7 @@ class _Club {
       nflTeamCode(name, home ? game.homeAbbreviation : game.awayAbbreviation),
       nflTeamColor(name),
       home ? game.homeLogoUrl : game.awayLogoUrl,
+      TeamBadge.heroFor(game, home: home),
     );
   }
 
@@ -798,6 +822,7 @@ class _Club {
             team: name,
             code: code,
             logoUrl: logo,
+            heroTag: heroTag,
             size: featured ? 64 : 52,
           ),
           const SizedBox(height: 6),

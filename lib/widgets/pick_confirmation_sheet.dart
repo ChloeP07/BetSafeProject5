@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../theme.dart';
+import 'motion.dart';
 import 'shared.dart';
 import 'sports_ui.dart';
 
@@ -21,10 +22,17 @@ Future<bool> showPickConfirmation(
     side: .btt,
     useSafeArea: true,
     mainAxisMaxRatio: null,
+    // A solid dark purple sheet with a bright glass edge, so its figures stay
+    // readable over whatever is behind it.
     builder: (_) => DecoratedBox(
       decoration: const BoxDecoration(
-        color: BetSafeColors.paper,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [BetSafeColors.dusk, BetSafeColors.paper],
+        ),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(top: BorderSide(color: Color(0x55FFFFFF))),
       ),
       child: PickConfirmationSheet(team: team, stake: stake, coins: coins),
     ),
@@ -32,7 +40,7 @@ Future<bool> showPickConfirmation(
   return confirmed ?? false;
 }
 
-/// The body of the confirmation sheet. A light surface in both themes.
+/// The body of the confirmation sheet, on a solid dark surface.
 class PickConfirmationSheet extends StatelessWidget {
   const PickConfirmationSheet({
     super.key,
@@ -60,8 +68,8 @@ class PickConfirmationSheet extends StatelessWidget {
       ('After this pick', '${coins - stake} coins'),
       ('If your team wins', '${stake * 2} coins returned'),
     ];
-    // The sheet is a Material, which would reset text to the theme's color.
-    // It is cream in both themes, so its text is set dark here.
+    // The sheet is a Material, which would reset text to the theme's color,
+    // so its text color is set here.
     return DefaultTextStyle.merge(
       style: const TextStyle(color: BetSafeColors.ink),
       child: IconTheme(
@@ -71,8 +79,7 @@ class PickConfirmationSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Drawn here because the theme's handle is light in dark mode
-              // and fades into the cream sheet.
+              // Drawn here so it keeps a 3:1 contrast with the sheet.
               Center(
                 child: Container(
                   key: const ValueKey('sheet-handle'),
@@ -112,26 +119,29 @@ class PickConfirmationSheet extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              for (final (label, value) in rows)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: MergeSemantics(
-                    child: Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      spacing: 12,
-                      children: [
-                        Text(
-                          label,
-                          style: const TextStyle(color: BetSafeColors.muted),
-                        ),
-                        Text(
-                          value,
-                          style: const TextStyle(
-                            color: BetSafeColors.ink,
-                            fontWeight: FontWeight.w800,
+              for (final (index, (label, value)) in rows.indexed)
+                Enter(
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: MergeSemantics(
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        spacing: 12,
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(color: BetSafeColors.muted),
                           ),
-                        ),
-                      ],
+                          Text(
+                            value,
+                            style: const TextStyle(
+                              color: BetSafeColors.ink,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -142,17 +152,23 @@ class PickConfirmationSheet extends StatelessWidget {
                 style: TextStyle(color: BetSafeColors.muted, fontSize: 12),
               ),
               const SizedBox(height: 20),
-              FButton(
-                size: .lg,
-                onPress: () => _close(context, true),
-                child: const ButtonLabel('Confirm pick'),
+              Enter(
+                index: rows.length,
+                child: FButton(
+                  size: .lg,
+                  onPress: () => _close(context, true),
+                  child: const ButtonLabel('Confirm pick'),
+                ),
               ),
               const SizedBox(height: 8),
-              FButton(
-                variant: .outline,
-                size: .lg,
-                onPress: () => _close(context, false),
-                child: const ButtonLabel('Go back'),
+              Enter(
+                index: rows.length + 1,
+                child: FButton(
+                  variant: .outline,
+                  size: .lg,
+                  onPress: () => _close(context, false),
+                  child: const ButtonLabel('Go back'),
+                ),
               ),
             ],
           ),

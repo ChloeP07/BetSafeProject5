@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme.dart';
+import 'glass.dart';
+import 'motion.dart';
+
 class PageBody extends StatelessWidget {
   const PageBody({super.key, required this.children});
   final List<Widget> children;
@@ -27,13 +31,14 @@ class ButtonLabel extends StatelessWidget {
       Flexible(child: Text(text, textAlign: TextAlign.center));
 }
 
-/// A pushed page: a Forui header with a back button over a scrolling body.
+/// A pushed page on the glass background: a Forui header with a back button
+/// over a scrolling body.
 class DetailPage extends StatelessWidget {
   const DetailPage({super.key, required this.title, required this.children});
   final String title;
   final List<Widget> children;
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => GlassScaffold(
     body: SafeArea(
       child: Column(
         children: [
@@ -69,26 +74,29 @@ class EmptyMessage extends StatelessWidget {
     final theme = context.theme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
-      child: FCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 32, color: theme.colors.primary),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: theme.typography.display.lg.copyWith(
-                fontWeight: FontWeight.w700,
+      child: Enter(
+        child: GlassPanel(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 32, color: BetSafeColors.yellow),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: theme.typography.display.lg.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              style: theme.typography.body.sm.copyWith(
-                color: theme.colors.mutedForeground,
+              const SizedBox(height: 6),
+              Text(
+                message,
+                style: theme.typography.body.sm.copyWith(
+                  color: theme.colors.mutedForeground,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

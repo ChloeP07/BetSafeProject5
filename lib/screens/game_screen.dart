@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/motion.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 
@@ -27,88 +28,96 @@ class GameScreen extends StatelessWidget {
       return DetailPage(
         title: finalGame ? 'Result' : 'Game details',
         children: [
-          MatchTicket(game: game),
+          Enter(child: MatchTicket(game: game)),
           const SizedBox(height: 24),
 
           if (pick != null) ...[
-            SportsPanel(
-              color: pick.status == 'lost'
-                  ? BetSafeColors.loss
-                  : pick.status == 'won'
-                  ? BetSafeColors.mint
-                  : Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Your pick: ${pick.team}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
+            Enter(
+              index: 1,
+              child: SportsPanel(
+                color: pick.status == 'lost'
+                    ? BetSafeColors.loss
+                    : pick.status == 'won'
+                    ? BetSafeColors.mint
+                    : Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // project05's success check celebrates a win.
+                        if (pick.status == 'won') ...const [
+                          GlassLottie('success', size: 40),
+                          SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Your pick: ${pick.team}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              pick.status == 'won'
-                                  ? 'Won'
-                                  : pick.status == 'lost'
-                                  ? 'Lost'
-                                  : pick.status == 'refunded'
-                                  ? 'Refunded'
-                                  : 'Pending',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1,
-                                color: pick.status == 'won'
-                                    ? BetSafeColors.green
+                              const SizedBox(height: 4),
+                              Text(
+                                pick.status == 'won'
+                                    ? 'Won'
                                     : pick.status == 'lost'
-                                    ? BetSafeColors.lossInk
-                                    : BetSafeColors.muted,
+                                    ? 'Lost'
+                                    : pick.status == 'refunded'
+                                    ? 'Refunded'
+                                    : 'Pending',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                  color: pick.status == 'won'
+                                      ? BetSafeColors.green
+                                      : pick.status == 'lost'
+                                      ? BetSafeColors.lossInk
+                                      : BetSafeColors.muted,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      '${pick.stake} virtual coins staked',
+                      style: const TextStyle(color: BetSafeColors.muted),
+                    ),
+
+                    if (finalGame) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        pick.status == 'refunded'
+                            ? 'Your stake was returned.'
+                            : pick.status == 'won'
+                            ? 'You won'
+                            : 'You lost',
+                        style: text.headlineSmall?.copyWith(
+                          color: BetSafeColors.ink,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    '${pick.stake} virtual coins staked',
-                    style: const TextStyle(color: BetSafeColors.muted),
-                  ),
-
-                  if (finalGame) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      pick.status == 'refunded'
-                          ? 'Your stake was returned.'
-                          : pick.status == 'won'
-                          ? 'You won'
-                          : 'You lost',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.ink,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 12),
+                      Text(
+                        pick.status == 'refunded'
+                            ? '${pick.payout} coins refunded for a tie or canceled game.'
+                            : pick.status == 'won'
+                            ? '${pick.payout} coins returned. You earned a team collectible—find it in Collection.'
+                            : 'Your stake was spent. Only virtual coins were at play.',
+                        style: const TextStyle(height: 1.5),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      pick.status == 'refunded'
-                          ? '${pick.payout} coins refunded for a tie or canceled game.'
-                          : pick.status == 'won'
-                          ? '${pick.payout} coins returned. You earned a team collectible—find it in Collection.'
-                          : 'Your stake was spent. Only virtual coins were at play.',
-                      style: const TextStyle(height: 1.5),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ],

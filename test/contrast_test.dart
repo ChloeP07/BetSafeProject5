@@ -55,6 +55,10 @@ Future<void> chooseBills(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// The green-tinted glass of the payout panel over the page, as one opaque
+/// color: 30% of the green over the top of the gradient.
+const winGlass = Color(0xFF48536D);
+
 const limitUsed =
     'You’ve used all of today’s stake limit. '
     'You can pick again after it resets at midnight UTC.';
@@ -65,8 +69,9 @@ void main() {
   ) async {
     await pumpPick(tester, stateJson(coins: 120));
     await chooseBills(tester);
-    // On the page itself.
-    const page = BetSafeColors.paper;
+    // On the page itself, checked against glass, which is lighter than the
+    // page and so the harder case.
+    const page = BetSafeColors.glass;
     expectReadable(tester, 'Your stake', page);
     expectReadable(tester, '50 coins', page);
     expectReadable(
@@ -77,18 +82,21 @@ void main() {
     expectReadable(tester, 'You’re backing the Bills', page);
     // The selected stake on the yellow accent.
     expectReadable(tester, '100 coins', BetSafeColors.yellow);
-    // The payout panel on mint.
-    expectReadable(tester, 'If your team wins', BetSafeColors.mint);
-    expectReadable(tester, '200 coins returned', BetSafeColors.mint);
-    // The wallet panel on white.
-    expectReadable(tester, 'Balance now', Colors.white);
-    expectReadable(tester, '120 coins', Colors.white);
-    expectReadable(tester, '20 coins', Colors.white);
+    // The payout panel on green glass.
+    expectReadable(tester, 'If your team wins', winGlass);
+    expectReadable(tester, '200 coins returned', winGlass);
     expectReadable(
       tester,
-      '500 of 500 coins left to stake today',
-      Colors.white,
+      'Includes your 100-coin stake. Lose: your stake is spent. Demo payout: '
+      '2×, not real betting odds.',
+      winGlass,
     );
+    // The wallet panel on glass.
+    const glass = BetSafeColors.glass;
+    expectReadable(tester, 'Balance now', glass);
+    expectReadable(tester, '120 coins', glass);
+    expectReadable(tester, '20 coins', glass);
+    expectReadable(tester, '500 of 500 coins left to stake today', glass);
   });
 
   testWidgets('the selected stake shows a check, not just a color', (
@@ -112,8 +120,8 @@ void main() {
 
   testWidgets('hints and stake messages are readable', (tester) async {
     await pumpPick(tester, stateJson(dailyStaked: 500));
-    expectReadable(tester, 'No stake fits right now.', BetSafeColors.paper);
-    expectReadable(tester, limitUsed, BetSafeColors.paper);
+    expectReadable(tester, 'No stake fits right now.', BetSafeColors.glass);
+    expectReadable(tester, limitUsed, BetSafeColors.glass);
   });
 
   testWidgets('the stale NFL notice is readable', (tester) async {
@@ -125,9 +133,9 @@ void main() {
       tester,
       'The NFL data may be out of date, so NFL picks are paused until a '
       'refresh works.',
-      Colors.white,
+      BetSafeColors.glass,
     );
-    expectReadable(tester, 'Refresh NFL data', Colors.white);
+    expectReadable(tester, 'Refresh NFL data', BetSafeColors.glass);
   });
 
   testWidgets('the confirmation sheet is readable', (tester) async {
@@ -142,7 +150,8 @@ void main() {
       '200 coins returned',
       'Go back',
     ]) {
-      expectReadable(tester, text, BetSafeColors.paper);
+      // The sheet fades from dusk at the top to paper; dusk is lighter.
+      expectReadable(tester, text, BetSafeColors.dusk);
     }
     final sheetTeam = find.descendant(
       of: find.byType(PickConfirmationSheet),
@@ -152,7 +161,7 @@ void main() {
       tester.renderObject<RenderParagraph>(sheetTeam).text.style!.color,
       BetSafeColors.ink,
     );
-    expectReadable(tester, 'Confirm pick', BetSafeColors.ink);
+    expectReadable(tester, 'Confirm pick', BetSafeColors.yellow);
     final handle = tester.widget<Container>(
       find.byKey(const ValueKey('sheet-handle')),
     );
@@ -164,7 +173,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester, stateJson(dailyStaked: 500));
-    expectReadable(tester, limitUsed, Colors.white);
-    expectReadable(tester, '1,000', BetSafeColors.ink);
+    expectReadable(tester, limitUsed, BetSafeColors.glass);
+    expectReadable(tester, '1,000', BetSafeColors.glass);
   });
 }

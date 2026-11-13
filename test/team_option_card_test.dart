@@ -47,7 +47,7 @@ void main() {
     await pumpOption(tester, selected: true, onTap: () {});
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
     final button = tester.widget<FButton>(find.byType(FButton));
-    expect(button.variant, FButtonVariant.secondary);
+    expect(button.variant, FButtonVariant.primary);
     expect(button.selected, isTrue);
   });
 

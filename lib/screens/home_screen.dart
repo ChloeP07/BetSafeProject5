@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../services/betsafe_api.dart';
-import '../theme.dart';
 import '../widgets/game_skeleton.dart';
+import '../widgets/glass.dart';
 import '../widgets/shared.dart';
 import 'games_screen.dart';
 import 'picks_screen.dart';
@@ -60,23 +61,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
     builder: (context, _) {
-      final destinations = const [
-        NavigationDestination(
-          icon: Icon(Icons.calendar_today_outlined),
-          selectedIcon: Icon(Icons.calendar_today),
-          label: 'Games',
+      final picks = api.state?.picks.length ?? 0;
+      final tabs = [
+        const GlassTab(
+          'Games',
+          Icons.calendar_today_outlined,
+          Icons.calendar_today,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.bookmark_border),
-          selectedIcon: Icon(Icons.bookmark),
-          label: 'My picks',
+        GlassTab(
+          'My picks',
+          Icons.bookmark_border,
+          Icons.bookmark,
+          badge: picks,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.layers_outlined),
-          selectedIcon: Icon(Icons.layers),
-          label: 'Collection',
-        ),
+        const GlassTab('Collection', Icons.layers_outlined, Icons.layers),
       ];
+      final page = api.state == null
+          ? (api.busy
+                ? const GameListSkeleton()
+                : const PageBody(
+                    children: [
+                      EmptyMessage(
+                        title: 'Can’t connect',
+                        message: 'Try again in a moment.',
+                        icon: Icons.cloud_off,
+                      ),
+                    ],
+                  ))
+          : switch (destination) {
+              0 => GamesScreen(api: api),
+              1 => PicksScreen(api: api),
+              _ => CollectionScreen(api: api),
+            };
       final content = Column(
         children: [
           if (api.busy) const FProgress(semanticsLabel: 'Loading'),
@@ -86,100 +102,69 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onRetry: api.busy ? null : () => api.refresh(),
             ),
           Expanded(
-            child: api.state == null
-                ? (api.busy
-                      ? const GameListSkeleton()
-                      : const PageBody(
-                          children: [
-                            EmptyMessage(
-                              title: 'Can’t connect',
-                              message: 'Try again in a moment.',
-                              icon: Icons.cloud_off,
-                            ),
-                          ],
-                        ))
-                : switch (destination) {
-                    0 => GamesScreen(api: api),
-                    1 => PicksScreen(api: api),
-                    _ => CollectionScreen(api: api),
-                  },
+            // Tabs fade through each other, from the animations package.
+            child: PageTransitionSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 320),
+              transitionBuilder: (child, animation, secondaryAnimation) =>
+                  FadeThroughTransition(
+                    animation: animation,
+                    secondaryAnimation: secondaryAnimation,
+                    fillColor: Colors.transparent,
+                    child: child,
+                  ),
+              child: KeyedSubtree(
+                key: ValueKey(api.state == null ? -1 : destination),
+                child: page,
+              ),
+            ),
           ),
         ],
       );
-      return Scaffold(
+      final wide = MediaQuery.sizeOf(context).width >= 720;
+      return GlassScaffold(
+        // The tab bar sits below the list, on the gradient, so it never
+        // covers a card the player is trying to tap.
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 720) return content;
-              return Row(
-                children: [
-                  NavigationRail(
-                    selectedIndex: destination,
-                    labelType: NavigationRailLabelType.all,
-                    onDestinationSelected: (value) =>
-                        setState(() => destination = value),
-                    destinations: destinations
-                        .map(
-                          (item) => NavigationRailDestination(
-                            icon: item.icon,
-                            selectedIcon: item.selectedIcon,
-                            label: Text(item.label),
+          bottom: wide,
+          child: !wide
+              ? content
+              : Row(
+                  children: [
+                    NavigationRail(
+                      selectedIndex: destination,
+                      labelType: NavigationRailLabelType.all,
+                      onDestinationSelected: (value) =>
+                          setState(() => destination = value),
+                      destinations: [
+                        for (final tab in tabs)
+                          NavigationRailDestination(
+                            icon: Badge.count(
+                              count: tab.badge,
+                              isLabelVisible: tab.badge > 0,
+                              child: Icon(tab.icon),
+                            ),
+                            selectedIcon: Icon(tab.selectedIcon),
+                            label: Text(tab.label),
                           ),
-                        )
-                        .toList(),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: content),
-                ],
-              );
-            },
-          ),
+                      ],
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: content),
+                  ],
+                ),
         ),
-        bottomNavigationBar: MediaQuery.sizeOf(context).width >= 720
+        bottomBar: wide
             ? null
             : SafeArea(
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-                  // Forui's bottom navigation bar, in a rounded white bar.
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE2DCD2)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x1A302016),
-                          blurRadius: 16,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: FBottomNavigationBar(
-                        index: destination,
-                        onChange: (value) =>
-                            setState(() => destination = value),
-                        children: [
-                          for (final (index, item) in destinations.indexed)
-                            FBottomNavigationBarItem(
-                              icon: Badge.count(
-                                count: api.state?.picks.length ?? 0,
-                                isLabelVisible:
-                                    index == 1 &&
-                                    (api.state?.picks.isNotEmpty ?? false),
-                                backgroundColor: BetSafeColors.yellow,
-                                textColor: BetSafeColors.ink,
-                                child: destination == index
-                                    ? item.selectedIcon!
-                                    : item.icon,
-                              ),
-                              label: Text(item.label),
-                            ),
-                        ],
-                      ),
-                    ),
+                  child: GlassTabBar(
+                    tabs: tabs,
+                    selectedIndex: destination,
+                    onSelected: (value) => setState(() => destination = value),
                   ),
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/motion.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
 
@@ -27,34 +28,36 @@ class CollectionScreen extends StatelessWidget {
             icon: Icons.layers_outlined,
           ),
         const SizedBox(height: 20),
-        for (final card in api.state!.collection) ...[
-          SportsPanel(
-            color: Colors.white,
-            child: Row(
-              children: [
-                TeamBadge(team: card.team, size: 56),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        card.team,
-                        style: text.titleLarge?.copyWith(
-                          color: BetSafeColors.ink,
+        for (final (index, card) in api.state!.collection.indexed) ...[
+          Enter(
+            index: index,
+            child: SportsPanel(
+              child: Row(
+                children: [
+                  TeamBadge(team: card.team, size: 56),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.team,
+                          style: text.titleLarge?.copyWith(
+                            color: BetSafeColors.ink,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(card.name),
-                      const SizedBox(height: 8),
-                      Text(
-                        card.rarity,
-                        style: const TextStyle(color: BetSafeColors.muted),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(card.name),
+                        const SizedBox(height: 8),
+                        Text(
+                          card.rarity,
+                          style: const TextStyle(color: BetSafeColors.muted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),

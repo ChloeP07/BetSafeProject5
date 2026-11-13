@@ -43,7 +43,7 @@ class StakeSelector extends StatelessWidget {
               FButton(
                 // The chosen stake takes the yellow accent, with a check so
                 // the choice does not rely on color alone.
-                variant: selected == value ? .secondary : .outline,
+                variant: selected == value ? .primary : .outline,
                 size: .lg,
                 mainAxisSize: .min,
                 selected: selected == value,

@@ -12,6 +12,7 @@ import '../services/betsafe_api.dart';
 import '../theme.dart';
 import '../widgets/balance_preview.dart';
 import '../widgets/daily_limit_bar.dart';
+import '../widgets/motion.dart';
 import '../widgets/payout_figure.dart';
 import '../widgets/pick_confirmation_sheet.dart';
 import '../widgets/shared.dart';
@@ -126,7 +127,8 @@ class _PickScreenState extends State<PickScreen> {
         context: context,
         // At the bottom, so it never covers the header's back button.
         alignment: FToastAlignment.bottomCenter,
-        icon: const Icon(Icons.check_circle_outline),
+        // project05's success check draws itself in.
+        icon: const GlassLottie('success', size: 24),
         title: Text(pickLockedMessage(chosen, stake)),
       );
       _showGame();
@@ -194,14 +196,19 @@ class _PickScreenState extends State<PickScreen> {
         });
       }
       final locked = api.busy || picked || !game.canPick;
+      final canLock = !api.busy && !_leaving && block == null && stake != null;
+      // Each section rises in after the one above it.
+      var order = 0;
+      Widget enter(Widget child) => Enter(index: order++, child: child);
       return DetailPage(
         title: 'Make your pick',
         children: [
-          MatchTicket(
-            game: game,
-            color: BetSafeColors.soft,
-            selectedTeam: team,
-            onTeamTap: locked ? null : _choose,
+          enter(
+            MatchTicket(
+              game: game,
+              selectedTeam: team,
+              onTeamTap: locked ? null : _choose,
+            ),
           ),
           if (game.closedReason case final reason?) ...[
             const SizedBox(height: 16),
@@ -214,9 +221,11 @@ class _PickScreenState extends State<PickScreen> {
             _StaleDataNotice(onRefresh: api.busy ? null : api.refresh),
           ],
           const SizedBox(height: 28),
-          Text(
-            'Who takes the win?',
-            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          enter(
+            Text(
+              'Who takes the win?',
+              style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(height: 8),
           const Text('Choose your team. Keep it virtual.'),
@@ -241,13 +250,15 @@ class _PickScreenState extends State<PickScreen> {
             (game.away, 'Away team'),
             (game.home, 'Home team'),
           ])
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: TeamOptionCard(
-                team: option,
-                side: side,
-                selected: team == option,
-                onTap: locked ? null : () => _choose(option),
+            enter(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TeamOptionCard(
+                  team: option,
+                  side: side,
+                  selected: team == option,
+                  onTap: locked ? null : () => _choose(option),
+                ),
               ),
             ),
           if (team case final chosen?)
@@ -263,74 +274,86 @@ class _PickScreenState extends State<PickScreen> {
               ),
             ),
           const SizedBox(height: 16),
-          Text(
-            'Your stake',
-            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          enter(
+            Text(
+              'Your stake',
+              style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(height: 12),
-          StakeSelector(
-            selected: stake,
-            onChanged: locked
-                ? null
-                : (value) {
-                    _clearSubmissionError();
-                    setState(() => _chosenStake = value);
-                  },
-            isAllowed: (value) => canAffordStake(
-              value,
-              coins: state.coins,
-              dailyRemaining: state.dailyRemaining,
-            ),
-            caption: stakeCaption(
-              coins: state.coins,
-              dailyRemaining: state.dailyRemaining,
+          enter(
+            StakeSelector(
+              selected: stake,
+              onChanged: locked
+                  ? null
+                  : (value) {
+                      _clearSubmissionError();
+                      setState(() => _chosenStake = value);
+                    },
+              isAllowed: (value) => canAffordStake(
+                value,
+                coins: state.coins,
+                dailyRemaining: state.dailyRemaining,
+              ),
+              caption: stakeCaption(
+                coins: state.coins,
+                dailyRemaining: state.dailyRemaining,
+              ),
             ),
           ),
           if (stake != null) ...[
             const SizedBox(height: 20),
-            SportsPanel(
-              color: BetSafeColors.mint,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'If your team wins',
-                    style: TextStyle(color: BetSafeColors.green),
-                  ),
-                  const SizedBox(height: 8),
-                  PayoutFigure(
-                    coins: stake * 2,
-                    style: text.headlineSmall?.copyWith(
-                      color: BetSafeColors.green,
-                      fontWeight: FontWeight.w800,
+            // A green light sweeps the payout each time the stake changes.
+            Sweep(
+              trigger: stake,
+              color: const Color(0x668FE3B0),
+              child: SportsPanel(
+                color: BetSafeColors.mint,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'If your team wins',
+                      style: TextStyle(color: BetSafeColors.green),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
-                    style: const TextStyle(
-                      color: BetSafeColors.muted,
-                      fontSize: 12,
-                      height: 1.5,
+                    const SizedBox(height: 8),
+                    PayoutFigure(
+                      coins: stake * 2,
+                      style: text.headlineSmall?.copyWith(
+                        color: BetSafeColors.green,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
+                      // White, because muted text is too faint on the green glass.
+                      style: const TextStyle(
+                        color: BetSafeColors.ink,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
           const SizedBox(height: 16),
-          SportsPanel(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                BalancePreview(coins: state.coins, stake: stake),
-                const SizedBox(height: 12),
-                DailyLimitBar(
-                  remaining: state.dailyRemaining,
-                  limit: state.dailyLimit,
-                ),
-              ],
+          enter(
+            SportsPanel(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BalancePreview(coins: state.coins, stake: stake),
+                  const SizedBox(height: 12),
+                  DailyLimitBar(
+                    remaining: state.dailyRemaining,
+                    limit: state.dailyLimit,
+                  ),
+                ],
+              ),
             ),
           ),
           if (stakeMessage != null)
@@ -359,14 +382,17 @@ class _PickScreenState extends State<PickScreen> {
               onRetry: api.busy ? null : () => api.refresh(),
             ),
           const SizedBox(height: 24),
-          FButton(
-            size: .lg,
-            onPress: api.busy || _leaving || block != null || stake == null
-                ? null
-                : () => _lockIn(stake),
-            child: _sending
-                ? const _SavingLabel()
-                : const ButtonLabel('Lock in pick'),
+          // A light sweeps the button when it becomes ready to tap.
+          Sweep(
+            trigger: canLock,
+            color: canLock ? const Color(0x88FFFFFF) : Colors.transparent,
+            child: FButton(
+              size: .lg,
+              onPress: canLock ? () => _lockIn(stake) : null,
+              child: _sending
+                  ? const _SavingLabel()
+                  : const ButtonLabel('Lock in pick'),
+            ),
           ),
           if (api.busy ? null : lockInHint(block) case final hint?) ...[
             const SizedBox(height: 8),

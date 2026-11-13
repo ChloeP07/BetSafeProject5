@@ -79,7 +79,7 @@ void main() {
 
   testWidgets('the chosen stake takes the accent and a check', (tester) async {
     await tester.pumpWidget(_selector(onChanged: (_) {}));
-    expect(_chip(tester, 100).variant, FButtonVariant.secondary);
+    expect(_chip(tester, 100).variant, FButtonVariant.primary);
     expect(_chip(tester, 50).variant, FButtonVariant.outline);
     // The check means the choice does not rely on color alone.
     expect(

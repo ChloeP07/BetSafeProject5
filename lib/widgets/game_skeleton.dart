@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import 'motion.dart';
 import 'shared.dart';
 import 'sports_ui.dart';
 
@@ -46,7 +47,14 @@ class _GameListSkeletonState extends State<GameListSkeleton>
       child: FadeTransition(
         opacity: pulse,
         child: const PageBody(
-          children: [_SkeletonCard(), _SkeletonCard(), _SkeletonCard()],
+          children: [
+            // project05's loading animation over the placeholder cards.
+            Center(child: GlassLottie('loading', size: 64, loops: null)),
+            SizedBox(height: 12),
+            _SkeletonCard(),
+            _SkeletonCard(),
+            _SkeletonCard(),
+          ],
         ),
       ),
     ),
