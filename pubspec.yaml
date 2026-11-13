@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.2
   forui: ^0.27.7
+  flutter_animate: ^4.5.2
+  animations: ^3.0.0
+  glassmorphism: ^4.0.0
+  lottie: ^3.8.2
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +71,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Lottie animations shared with the project05 glass style.
+  assets:
+    - assets/lottie/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
