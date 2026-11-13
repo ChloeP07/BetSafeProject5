@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "description": "Team setup commands for the Flutter app and Node server",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "setup": "node scripts/project.mjs setup",
     "check": "node scripts/project.mjs check",
     "devices": "flutter devices",
     "server": "npm --prefix server start",
-    "server:dev": "npm --prefix server run dev"
+    "server:dev": "npm --prefix server run dev",
+    "android": "node scripts/android.mjs"
   }
 }

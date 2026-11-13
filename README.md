@@ -102,3 +102,25 @@ Copy `server/.env.example` to `server/.env`, then set `BALLDONTLIE_API_KEY` only
 The server queries one rolling date window (three days back through seven days ahead), caches it for 60 seconds, coalesces simultaneous refreshes and backs off on rate limits. The app refreshes once per minute while foregrounded and offers manual refresh. Source/fetch time and errors are shown; the fetch time does not guarantee the provider's own data freshness. No play-by-play feed is included.
 
 Picks on real games close at kickoff and require fresh provider data. Final results settle pending picks once; ties/canceled/abandoned games return the stake. Settlement happens when state is refreshed, not through a background job. Postponed/delayed/suspended/unknown games accept no new picks and await a definitive result. Keep the server running for the demo: accounts, picks and settlement are still in memory and reset on restart. Real games cannot use the simulation advance route.
+
+## One-command Android development
+
+Start your emulator in Android Studio → Device Manager, then from the repository root:
+
+```sh
+npm run android
+```
+
+If more than one Android device is connected, choose one explicitly:
+
+```sh
+npm run android -- emulator-5554
+```
+
+The launcher finds the Android device, checks the local BetSafe server, starts it if needed, and launches Flutter with the emulator’s server address. It reads the server port without printing your API key. An existing server is reused and stays running; a server started by the launcher stops when you quit Flutter. Press `q` to quit or `r` to hot reload. Restart a reused server yourself after changing server code or .env.
+
+For a physical Android phone, use the LAN setup above and set API_BASE_URL in your terminal before running this command; the emulator address will not work on a phone.
+
+CI can also be started from GitHub Actions → Build and test → Run workflow after the updated workflow is pushed. New runs cancel older unfinished runs for the same branch/PR. Jobs time out after 25 minutes; successful build artifacts are retained for seven days.
+
+Setup readiness, manual acceptance steps and remaining responsibilities: [docs/SETUP_HANDOFF.md](docs/SETUP_HANDOFF.md). The demo presenter can be any member; presentation is separate from development ownership.
