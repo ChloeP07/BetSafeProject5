@@ -6,6 +6,7 @@ import 'package:betsafeproject5/widgets/sports_ui.dart';
 import 'package:betsafeproject5/services/betsafe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -63,20 +64,20 @@ void main() {
     addTearDown(api.dispose);
     await tester.pumpWidget(BetSafeApp(api: api));
     await tester.pumpAndSettle();
-    expect(find.text('1000 virtual coins'), findsOneWidget);
+    expect(find.text('1,000'), findsOneWidget);
     await tester.tap(find.text('Collection'));
     await tester.pumpAndSettle();
-    expect(find.text('Make your first winning call.'), findsOneWidget);
+    expect(find.text('No cards yet'), findsOneWidget);
     await tester.tap(find.text('Games'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Make a pick'),
+      find.text('Pick BUF'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.ensureVisible(find.text('Make a pick'));
+    await tester.ensureVisible(find.text('Pick BUF'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Make a pick'));
+    await tester.tap(find.text('Pick BUF'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Lock in pick'),
@@ -86,27 +87,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Lock in pick'),
-          )
-          .onPressed,
-      isNull,
+          .widget<FButton>(find.widgetWithText(FButton, 'Lock in pick'))
+          .onPress,
+      isNotNull,
     );
-    await tester.scrollUntilVisible(
-      find.widgetWithText(OutlinedButton, 'Buffalo Bills'),
-      -200,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Buffalo Bills'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Lock in pick'),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Lock in pick'));
+    await tester.pumpAndSettle();
+    // Nothing is sent until the player confirms on the sheet.
+    expect(requests.where((request) => request.method == 'POST'), isEmpty);
+    expect(find.text('Lock in this pick?'), findsOneWidget);
+    await tester.tap(find.text('Confirm pick'));
     await tester.pumpAndSettle();
     expect(find.text('Your pick: Buffalo Bills'), findsOneWidget);
     expect(requests.where((request) => request.method == 'POST'), hasLength(1));
@@ -123,8 +113,8 @@ void main() {
     await tester.pumpWidget(BetSafeApp(api: api));
     await tester.pumpAndSettle();
     expect(find.text('Try again'), findsOneWidget);
-    expect(find.text('Start your demo server'), findsOneWidget);
-    expect(find.text('1000 virtual coins'), findsNothing);
+    expect(find.text('Can’t connect'), findsOneWidget);
+    expect(find.text('1,000'), findsNothing);
   });
 
   testWidgets('compact layout supports large text without overflow', (
@@ -145,11 +135,11 @@ void main() {
     await tester.pumpWidget(BetSafeApp(api: api));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('NFL matchups'),
+      find.text('More this week'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('NFL matchups'), findsOneWidget);
+    expect(find.text('More this week'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets(

@@ -1,245 +1,857 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:forui/forui.dart';
+
+import '../models/demo_state.dart';
+import '../models/game_list.dart';
+import '../models/game_status.dart';
+import '../models/game_time.dart';
+import '../models/pick_rules.dart';
 import '../services/betsafe_api.dart';
 import '../theme.dart';
+import '../widgets/glass.dart';
+import '../widgets/motion.dart';
 import '../widgets/shared.dart';
 import '../widgets/sports_ui.dart';
-import 'pick_screen.dart';
 import 'game_screen.dart';
+import 'pick_screen.dart';
+
+const _ink = BetSafeColors.ink;
+const _yellow = BetSafeColors.yellow;
+const _muted = BetSafeColors.muted;
+
+TextStyle _type(double size, double weight, [Color color = _ink]) => TextStyle(
+  fontFamily: 'Inter',
+  fontSize: size,
+  color: color,
+  fontVariations: [FontVariation('wght', weight)],
+);
 
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key, required this.api});
   final BetSafeApi api;
+
   @override
   State<GamesScreen> createState() => _GamesScreenState();
 }
 
 class _GamesScreenState extends State<GamesScreen> {
-  bool? simulation;
+  DateTime? selectedDay;
+  bool? demo;
+  GameFilter filter = GameFilter.all;
+  final search = TextEditingController();
+  bool showFinished = false;
+  late final Timer clock;
+
+  @override
+  void initState() {
+    super.initState();
+    // Keeps kickoff countdowns and "Updated N min ago" current.
+    clock = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    clock.cancel();
+    search.dispose();
+    super.dispose();
+  }
+
+  /// Switches the list (a day or Demo) and starts it with no filters.
+  void _showList({DateTime? day, required bool isDemo}) => setState(() {
+    demo = isDemo;
+    if (day != null) selectedDay = day;
+    filter = GameFilter.all;
+    search.clear();
+    showFinished = false;
+  });
+
+  void _clearFilters() => setState(() {
+    filter = GameFilter.all;
+    search.clear();
+  });
+
+  void _open(Game game, {String? team}) {
+    final api = widget.api;
+    if (api.busy) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => api.state!.pickFor(game.id) == null && game.canPick
+            ? PickScreen(api: api, gameId: game.id, initialTeam: team)
+            : GameScreen(api: api, gameId: game.id),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final api = widget.api;
     final state = api.state!;
-    final isDemo = simulation ?? !state.nfl.configured;
-    final games = state.games
-        .where((game) => game.isSimulation == isDemo)
+    final now = DateTime.now();
+    final nfl = gamesForSource(state.games, simulation: false)
+      ..sort((a, b) => (a.kickoff ?? now).compareTo(b.kickoff ?? now));
+    final featured = nfl
+        .where((game) => game.canPick && (game.kickoff?.isAfter(now) ?? false))
+        .firstOrNull;
+    final remaining = nfl.where((game) => game.id != featured?.id).toList();
+    final days = {
+      for (final game in remaining)
+        if (game.kickoff != null) DateUtils.dateOnly(game.kickoff!.toLocal()),
+    }.toList()..sort();
+    final isDemo = demo ?? !state.nfl.configured;
+    final activeDay = days.contains(selectedDay)
+        ? selectedDay
+        : days
+                  .where((day) => !day.isBefore(DateUtils.dateOnly(now)))
+                  .firstOrNull ??
+              days.lastOrNull;
+    final listGames = isDemo
+        ? gamesForSource(state.games, simulation: true)
+        : (remaining
+              .where(
+                (game) =>
+                    game.kickoff == null ||
+                    DateUtils.isSameDay(game.kickoff!.toLocal(), activeDay),
+              )
+              .toList()
+            ..sort(compareGames));
+    final searched = listGames
+        .where((game) => matchesTeamSearch(game, search.text))
         .toList();
-    int rank(String status) => switch (status) {
-      'live' => 0,
-      'scheduled' => 1,
-      'final' => 3,
-      _ => 2,
-    };
-    games.sort((a, b) {
-      final byStatus = rank(a.status).compareTo(rank(b.status));
-      return byStatus != 0
-          ? byStatus
-          : (a.kickoff ?? DateTime(2000)).compareTo(
-              b.kickoff ?? DateTime(2000),
-            );
-    });
-    final text = Theme.of(context).textTheme;
-    return PageBody(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hey, Demo player',
-                    style: text.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Ready to make your call?', style: text.bodySmall),
-                ],
-              ),
-            ),
-            const CircleAvatar(
-              backgroundColor: BetSafeColors.mint,
-              foregroundColor: BetSafeColors.green,
-              child: Icon(Icons.person_outline),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        SportsPanel(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.toll, size: 18, color: BetSafeColors.green),
-                  SizedBox(width: 8),
-                  Text(
-                    'Demo balance',
-                    style: TextStyle(color: BetSafeColors.muted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${state.coins} virtual coins',
-                style: text.headlineSmall?.copyWith(
-                  color: BetSafeColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.shield_outlined,
-                    size: 16,
-                    color: BetSafeColors.green,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${state.dailyRemaining} of 500 coins left to stake today',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: BetSafeColors.muted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: BetSafeColors.brown,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    final shown = searched.where(filter.matches).toList();
+    final sections = groupGames(shown);
+    // Finished games fold away only when other games are on screen. A search or
+    // the Final filter is asking for them, so those keep them open.
+    final canCollapse =
+        sections.length > 1 &&
+        filter != GameFilter.finished &&
+        search.text.trim().isEmpty;
+    final summary = gameSummary(listGames, state.picks);
+    final walletNotice = noStakeMessage(
+      coins: state.coins,
+      dailyRemaining: state.dailyRemaining,
+    );
+
+    Widget ticket(Game game, {bool hero = false}) => _GameCard(
+      game: game,
+      featured: hero,
+      pick: state.pickFor(game.id),
+      now: now,
+      onOpen: api.busy ? null : (team) => _open(game, team: team),
+    );
+
+    // Each block rises in after the one above it.
+    var order = 0;
+    Widget enter(Widget child) => Enter(index: order++, child: child);
+
+    return RefreshIndicator(
+      color: BetSafeColors.onAccent,
+      backgroundColor: _yellow,
+      onRefresh: api.refresh,
+      child: PageBody(
+        children: [
+          // At large text sizes the coin chip moves below the greeting
+          // instead of pushing it off the screen.
+          enter(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Big calls.\nZero cash.',
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.cream,
-                        fontWeight: FontWeight.w900,
-                        height: 1.05,
+                    FAvatar.raw(
+                      size: 42,
+                      child: Text(
+                        state.playerName.trim().isEmpty
+                            ? 'P'
+                            : state.playerName
+                                  .trim()
+                                  .substring(0, 1)
+                                  .toUpperCase(),
+                        style: _type(18, 800),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'All the game-day feeling.\nOnly virtual coins.',
-                      style: TextStyle(color: Color(0xFFE7D3C1), height: 1.4),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Hey,', style: _type(13, 600, _muted)),
+                          Text(state.playerName, style: _type(18, 800)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
+                _CoinChip(state: state),
+              ],
+            ),
+          ),
+          if (walletNotice != null) ...[
+            const SizedBox(height: 12),
+            _Notice(icon: Icons.info_outline, message: walletNotice),
+          ],
+          if (!isDemo && featured != null) ...[
+            const SizedBox(height: 18),
+            enter(ticket(featured, hero: true)),
+          ],
+          const SizedBox(height: 22),
+          enter(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 10,
+              runSpacing: 4,
+              children: [
+                Text('More this week', style: _type(20, 800)),
+                if (!isDemo && state.nfl.fetchedAt != null)
+                  Text(
+                    updatedAgo(state.nfl.fetchedAt!, now: now),
+                    style: _type(11, 600, _muted),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          enter(
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final day in days)
+                    _ToggleButton(
+                      label:
+                          '${const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1]} ${day.month}/${day.day}',
+                      selected: !isDemo && DateUtils.isSameDay(activeDay, day),
+                      onPress: () => _showList(day: day, isDemo: false),
+                    ),
+                  _ToggleButton(
+                    label: 'Demo',
+                    selected: isDemo,
+                    onPress: () => _showList(isDemo: true),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              const FieldArtwork(),
+            ),
+          ),
+          if (!isDemo && state.nfl.hasProblem) ...[
+            const SizedBox(height: 12),
+            _Notice(
+              icon: Icons.cloud_off,
+              message:
+                  state.nfl.description ??
+                  'Scores may be out of date. Try refreshing.',
+              action: 'Try again',
+              onAction: api.busy ? null : api.refresh,
+            ),
+          ] else if (isDemo) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Simulation · sample games, scores and payouts.',
+              style: _type(12, 600, _muted),
+            ),
+          ],
+          if (listGames.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            enter(
+              FTextField(
+                control: .managed(
+                  controller: search,
+                  onChange: (_) => setState(() {}),
+                ),
+                hint: 'Search teams',
+                textInputAction: TextInputAction.search,
+                prefixBuilder: (context, style, variants) => const Padding(
+                  padding: EdgeInsetsDirectional.only(start: 12),
+                  child: Icon(Icons.search, size: 20, color: _muted),
+                ),
+                clearable: (value) => value.text.isNotEmpty,
+              ),
+            ),
+            const SizedBox(height: 10),
+            enter(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in GameFilter.values)
+                    _ToggleButton(
+                      label:
+                          '${option.label} · ${searched.where(option.matches).length}',
+                      selected: filter == option,
+                      onPress: () => setState(() => filter = option),
+                      trailingGap: false,
+                    ),
+                ],
+              ),
+            ),
+            if (summary.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(summary, style: _type(12, 600, _muted)),
             ],
-          ),
-        ),
-        const SizedBox(height: 28),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'NFL matchups',
-                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-            ),
-            Text('${games.length} games', style: text.bodySmall),
           ],
-        ),
-
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            ChoiceChip(
-              label: const Text('NFL schedule'),
-              selected: !isDemo,
-              onSelected: (_) => setState(() => simulation = false),
-            ),
-            ChoiceChip(
-              label: const Text('Demo games'),
-              selected: isDemo,
-              onSelected: (_) => setState(() => simulation = true),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          isDemo
-              ? 'Simulation · sample games, scores and payouts.'
-              : state.nfl.description,
-          style: text.bodySmall,
-        ),
-        if (!isDemo && games.isEmpty)
-          const EmptyMessage(
-            title: 'No NFL games available',
-            message: 'Try refreshing the schedule, or choose Demo games to try the full pick flow.',
-            icon: Icons.sports_football_outlined,
-          ),
-        const SizedBox(height: 16),
-        for (final (index, game) in games.indexed) ...[
-          MatchTicket(
-            game: game,
-            color: index.isEven ? Colors.white : BetSafeColors.mint,
-            footer: Column(
+          const SizedBox(height: 12),
+          Padding(
+            padding: EdgeInsets.zero,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  game.isSimulation
-                      ? '2× demo return · virtual coins only'
-                      : '2× virtual-coin return · no real-money odds',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: BetSafeColors.muted,
+                if (listGames.isEmpty)
+                  _EmptyList(
+                    title: isDemo
+                        ? 'No demo games available'
+                        : featured == null
+                        ? 'No NFL games available'
+                        : 'No more games this week',
+                    message: isDemo
+                        ? 'Restart the demo server to bring back the sample games.'
+                        : 'Pull down to refresh, or choose Demo to try the full pick flow.',
+                  )
+                else if (shown.isEmpty)
+                  _EmptyList(
+                    title: 'No games match',
+                    message: 'Try a different team or filter, or clear them to see every game.',
+                    action: 'Clear filters',
+                    onAction: _clearFilters,
                   ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: api.busy
-                      ? null
-                      : () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                state.pickFor(game.id) == null && game.canPick
-                                ? PickScreen(api: api, gameId: game.id)
-                                : GameScreen(api: api, gameId: game.id),
+                for (final (index, section) in sections.indexed) ...[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(6, index == 0 ? 2 : 14, 0, 8),
+                    child: Row(
+                      children: [
+                        // project05's pulse animation marks live games.
+                        if (section.tone == GameTone.live) ...const [
+                          GlassLottie('pulse', size: 28, loops: 3),
+                          SizedBox(width: 4),
+                        ],
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: Text(section.title, style: _type(16, 800)),
                           ),
                         ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: BetSafeColors.darkBrown,
-                    foregroundColor: BetSafeColors.cream,
+                        if (canCollapse && section.tone == GameTone.finished)
+                          // Flexible, so at large text sizes the label wraps
+                          // instead of pushing the button off the screen.
+                          Flexible(
+                            child: FButton(
+                              variant: .ghost,
+                              size: .lg,
+                              mainAxisSize: .min,
+                              onPress: () =>
+                                  setState(() => showFinished = !showFinished),
+                              child: ButtonLabel(
+                                showFinished
+                                    ? 'Hide'
+                                    : 'Show ${gameCountLabel(section.games.length)}',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  child: Text(
-                    state.pickFor(game.id) == null && game.canPick
-                        ? 'Make a pick'
-                        : 'View game',
-                  ),
-                ),
+                  if (!canCollapse ||
+                      showFinished ||
+                      section.tone != GameTone.finished)
+                    for (final (gameIndex, game) in section.games.indexed) ...[
+                      if (gameIndex > 0) const SizedBox(height: 12),
+                      // Keyed by game, so a card that a filter or search
+                      // brings in rises in too.
+                      Enter(
+                        key: ValueKey('card-${game.id}'),
+                        index: gameIndex,
+                        child: ticket(game),
+                      ),
+                    ],
+                ],
               ],
             ),
           ),
           const SizedBox(height: 16),
+          Text(
+            'No deposits. No cash-outs. Collectibles have no cash value.',
+            textAlign: TextAlign.center,
+            style: _type(11, 600, _muted),
+          ),
         ],
-        const SizedBox(height: 8),
-        Text(
-          'No deposits. No cash-outs. Collectibles have no cash value.',
-          style: text.bodySmall,
-        ),
-      ],
+      ),
     );
   }
+}
+
+/// A Forui button that shows whether it is the chosen one, for the day picker
+/// and the status filters. Large, so it meets the 48-pixel touch target.
+class _ToggleButton extends StatelessWidget {
+  const _ToggleButton({
+    required this.label,
+    required this.selected,
+    required this.onPress,
+    this.trailingGap = true,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onPress;
+  final bool trailingGap;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = FButton(
+      variant: selected ? .primary : .outline,
+      size: .lg,
+      mainAxisSize: .min,
+      selected: selected,
+      onPress: onPress,
+      child: ButtonLabel(label),
+    );
+    return trailingGap
+        ? Padding(padding: const EdgeInsets.only(right: 8), child: button)
+        : button;
+  }
+}
+
+/// A Forui alert with an optional action, such as Try again.
+class _Notice extends StatelessWidget {
+  const _Notice({
+    required this.icon,
+    required this.message,
+    this.action,
+    this.onAction,
+  });
+  final IconData icon;
+  final String message;
+  final String? action;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      FAlert(icon: Icon(icon), title: Text(message)),
+      if (action != null) ...[
+        const SizedBox(height: 8),
+        FButton(
+          variant: .outline,
+          size: .lg,
+          onPress: onAction,
+          child: ButtonLabel(action!),
+        ),
+      ],
+    ],
+  );
+}
+
+class _EmptyList extends StatelessWidget {
+  const _EmptyList({
+    required this.title,
+    required this.message,
+    this.action,
+    this.onAction,
+  });
+  final String title, message;
+  final String? action;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) => GlassPanel(
+    child: Padding(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: _type(16, 800)),
+          const SizedBox(height: 4),
+          Text(message, style: _type(13, 600, _muted)),
+          if (action != null) ...[
+            const SizedBox(height: 12),
+            FButton(size: .lg, onPress: onAction, child: ButtonLabel(action!)),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _CoinChip extends StatelessWidget {
+  const _CoinChip({required this.state});
+  final DemoState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = state.dailyLimit > 0
+        ? (state.dailyRemaining / state.dailyLimit).clamp(0.0, 1.0)
+        : 0.0;
+    // The balance drops into place whenever it changes.
+    Widget coins = Text(
+      MaterialLocalizations.of(context).formatDecimal(state.coins),
+      style: _type(15, 800, Colors.white),
+      semanticsLabel: '${state.coins} virtual coins',
+    );
+    if (Motion.on(context)) {
+      coins = coins
+          .animate(key: ValueKey(state.coins))
+          .fadeIn(duration: 250.ms)
+          .slideY(
+            begin: -.6,
+            end: 0,
+            duration: 450.ms,
+            curve: Curves.easeOutBack,
+          );
+    }
+    return GlassPanel(
+      radius: 24,
+      strong: true,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox.square(
+            dimension: 27,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  color: _yellow,
+                  backgroundColor: BetSafeColors.line,
+                  strokeWidth: 2,
+                ),
+                const Icon(Icons.toll_outlined, color: _yellow, size: 16),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                coins,
+                Text(
+                  '${state.dailyRemaining} left today',
+                  style: _type(11, 600, _muted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GameCard extends StatelessWidget {
+  const _GameCard({
+    required this.game,
+    required this.featured,
+    required this.pick,
+    required this.now,
+    required this.onOpen,
+  });
+  final Game game;
+  final bool featured;
+  final Pick? pick;
+  final DateTime now;
+  final void Function(String?)? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final away = _Club.fromGame(game, home: false);
+    final home = _Club.fromGame(game, home: true);
+    final kickoff = game.kickoff?.toLocal();
+    final time = kickoff == null
+        ? null
+        : MaterialLocalizations.of(context)
+              .formatTimeOfDay(TimeOfDay.fromDateTime(kickoff));
+    final timeParts = time?.split(' ');
+    final until = kickoff?.difference(now);
+    const foreground = _ink;
+    const muted = _muted;
+    final canOpenPick = game.canPick && pick == null;
+    final isFinal = game.status == 'final';
+    final isLive = game.status == 'live';
+    final hasScore = game.awayScore != null && game.homeScore != null;
+    final closed = pick == null && !isFinal ? game.closedReason : null;
+    final radius = featured ? 28.0 : 20.0;
+
+    // The big middle line: a score once there is one, otherwise the kickoff.
+    final headline = isFinal
+        ? (hasScore ? '${game.awayScore} : ${game.homeScore}' : 'Game ended')
+        : isLive
+        ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
+        : (timeParts?.first ?? (game.isSimulation ? 'Demo' : 'TBD'));
+    final caption = isFinal
+        ? (game.isTied ? 'Tied' : 'Final')
+        : isLive
+        ? 'Live'
+        : game.tone == GameTone.waiting
+        ? game.statusLabel
+        : (timeParts?.length ?? 0) > 1
+        ? (featured && home.name.contains(' ')
+              ? '${timeParts!.last} · @ ${home.name.substring(0, home.name.lastIndexOf(' '))}'
+              : timeParts!.last)
+        : null;
+
+    // Picks on the featured card, and a team already picked, take the yellow
+    // accent; other cards use purple.
+    Widget action(_Club club) {
+      final picked = pick?.team == club.name;
+      return Expanded(
+        child: FButton(
+          variant: picked || featured ? .primary : .secondary,
+          size: .lg,
+          onPress: onOpen == null || (!canOpenPick && !picked)
+              ? null
+              : () => onOpen!(club.name),
+          prefix: picked
+              ? const Icon(Icons.check, size: 16)
+              : _TeamDot(color: club.color),
+          child: ButtonLabel(
+            picked ? '${club.code} picked' : 'Pick ${club.code}',
+          ),
+        ),
+      );
+    }
+
+    // A glass card; the featured one is brighter and tinted purple. The whole
+    // card opens the game. Screen readers use the buttons instead.
+    return GlassPanel(
+      radius: radius,
+      padding: EdgeInsets.zero,
+      strong: featured,
+      tint: featured ? BetSafeColors.purple : null,
+      onTap: onOpen == null ? null : () => onOpen!(null),
+      child: Column(
+        children: [
+          if (!featured)
+            Row(
+              children: [
+                Expanded(
+                  child: ColoredBox(
+                    color: away.color,
+                    child: const SizedBox(height: 5),
+                  ),
+                ),
+                Expanded(
+                  child: ColoredBox(
+                    color: home.color,
+                    child: const SizedBox(height: 5),
+                  ),
+                ),
+              ],
+            ),
+          Padding(
+            padding: EdgeInsets.all(featured ? 18 : 12),
+            child: Column(
+              children: [
+                Semantics(
+                  container: true,
+                  label: game.matchupDescription,
+                  child: ExcludeSemantics(
+                    child: Column(
+                      children: [
+                        if (featured && kickoff != null) ...[
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Text(
+                                '${MaterialLocalizations.of(context).formatFullDate(kickoff).split(',').first.toUpperCase()} · NFL',
+                                style: _type(
+                                  12,
+                                  800,
+                                  _yellow,
+                                ).copyWith(letterSpacing: 1.2),
+                              ),
+                              StatusPill(
+                                until == null || until.isNegative
+                                    ? 'Kickoff now'
+                                    : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
+                                color: _ink,
+                                background: BetSafeColors.soft,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: away.badge(
+                                foreground,
+                                featured: featured,
+                                won: game.winner == away.name,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: 4,
+                                  right: 4,
+                                  top: featured ? 17 : 14,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      headline,
+                                      textAlign: TextAlign.center,
+                                      style: _type(
+                                        featured ? 34 : 18,
+                                        900,
+                                        foreground,
+                                      ),
+                                    ),
+                                    if (caption != null)
+                                      Text(
+                                        caption,
+                                        textAlign: TextAlign.center,
+                                        style: _type(11, 600, muted),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 5,
+                              child: home.badge(
+                                foreground,
+                                featured: featured,
+                                won: game.winner == home.name,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (closed != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    closed,
+                    textAlign: TextAlign.center,
+                    style: _type(12, 600, muted),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                if (!isFinal && (canOpenPick || pick != null))
+                  // A light sweeps across the featured picks once.
+                  Sweep(
+                    trigger: featured ? game.id : null,
+                    color: featured
+                        ? const Color(0x88FFFFFF)
+                        : Colors.transparent,
+                    child: Row(
+                      children: [
+                        action(away),
+                        const SizedBox(width: 8),
+                        action(home),
+                      ],
+                    ),
+                  )
+                else
+                  FButton(
+                    variant: featured
+                        ? .primary
+                        : isFinal
+                        ? .secondary
+                        : .outline,
+                    size: .lg,
+                    onPress: onOpen == null ? null : () => onOpen!(null),
+                    child: ButtonLabel(isFinal ? 'See score' : 'View game'),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small dot in the team's color, shown in its Pick button.
+class _TeamDot extends StatelessWidget {
+  const _TeamDot({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(
+      color: color,
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 1.5),
+    ),
+  );
+}
+
+class _Club {
+  const _Club(this.name, this.code, this.color, this.logo, this.heroTag);
+  final String name, code;
+  final Color color;
+  final String? logo;
+
+  /// Shared with the game's other pages, so the badge flies between them.
+  final String heroTag;
+
+  factory _Club.fromGame(Game game, {required bool home}) {
+    final name = home ? game.home : game.away;
+    return _Club(
+      name,
+      nflTeamCode(name, home ? game.homeAbbreviation : game.awayAbbreviation),
+      nflTeamColor(name),
+      home ? game.homeLogoUrl : game.awayLogoUrl,
+      TeamBadge.heroFor(game, home: home),
+    );
+  }
+
+  Widget badge(Color foreground, {required bool featured, bool won = false}) =>
+      Column(
+        children: [
+          TeamBadge(
+            team: name,
+            code: code,
+            logoUrl: logo,
+            heroTag: heroTag,
+            size: featured ? 64 : 52,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            featured ? name : name.split(' ').last,
+            textAlign: TextAlign.center,
+            style: _type(12, won ? 900 : 700, foreground),
+          ),
+          if (won)
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 3,
+              children: [
+                Icon(
+                  Icons.emoji_events,
+                  size: 13,
+                  color: featured ? _yellow : BetSafeColors.green,
+                ),
+                Text(
+                  'Winner',
+                  style: _type(
+                    11,
+                    800,
+                    featured ? _yellow : BetSafeColors.green,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      );
 }

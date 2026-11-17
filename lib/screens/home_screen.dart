@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../services/betsafe_api.dart';
+import '../widgets/game_skeleton.dart';
+import '../widgets/glass.dart';
 import '../widgets/shared.dart';
-import '../theme.dart';
 import 'games_screen.dart';
 import 'picks_screen.dart';
 import 'collection_screen.dart';
@@ -58,116 +61,110 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
     builder: (context, _) {
-      final destinations = const [
-        NavigationDestination(
-          icon: Icon(Icons.sports_football_outlined),
-          selectedIcon: Icon(Icons.sports_football),
-          label: 'Games',
+      final picks = api.state?.picks.length ?? 0;
+      final tabs = [
+        const GlassTab(
+          'Games',
+          Icons.calendar_today_outlined,
+          Icons.calendar_today,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long),
-          label: 'My picks',
+        GlassTab(
+          'My picks',
+          Icons.bookmark_border,
+          Icons.bookmark,
+          badge: picks,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.collections_bookmark_outlined),
-          selectedIcon: Icon(Icons.collections_bookmark),
-          label: 'Collection',
-        ),
+        const GlassTab('Collection', Icons.layers_outlined, Icons.layers),
       ];
+      final page = api.state == null
+          ? (api.busy
+                ? const GameListSkeleton()
+                : const PageBody(
+                    children: [
+                      EmptyMessage(
+                        title: 'Can’t connect',
+                        message: 'Try again in a moment.',
+                        icon: Icons.cloud_off,
+                      ),
+                    ],
+                  ))
+          : switch (destination) {
+              0 => GamesScreen(api: api),
+              1 => PicksScreen(api: api),
+              _ => CollectionScreen(api: api),
+            };
       final content = Column(
         children: [
-          if (api.busy) const LinearProgressIndicator(),
+          if (api.busy) const FProgress(semanticsLabel: 'Loading'),
           if (api.error != null)
             ServerError(
               message: api.error!,
               onRetry: api.busy ? null : () => api.refresh(),
             ),
           Expanded(
-            child: api.state == null
-                ? (api.busy
-                      ? const Center(child: CircularProgressIndicator())
-                      : const PageBody(
-                          children: [
-                            EmptyMessage(
-                              title: 'Start your demo server',
-                              message: 'Run npm start in the server folder, then tap Try again.',
-                              icon: Icons.cloud_off,
-                            ),
-                          ],
-                        ))
-                : switch (destination) {
-                    0 => GamesScreen(api: api),
-                    1 => PicksScreen(api: api),
-                    _ => CollectionScreen(api: api),
-                  },
+            // Tabs fade through each other, from the animations package.
+            child: PageTransitionSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 320),
+              transitionBuilder: (child, animation, secondaryAnimation) =>
+                  FadeThroughTransition(
+                    animation: animation,
+                    secondaryAnimation: secondaryAnimation,
+                    fillColor: Colors.transparent,
+                    child: child,
+                  ),
+              child: KeyedSubtree(
+                key: ValueKey(api.state == null ? -1 : destination),
+                child: page,
+              ),
+            ),
           ),
         ],
       );
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'BETSAFE',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
-              color: Theme.of(context).brightness == Brightness.light
-                  ? BetSafeColors.brown
-                  : BetSafeColors.cream,
-            ),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Refresh from server',
-              onPressed: api.busy ? null : () => api.refresh(),
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
+      final wide = MediaQuery.sizeOf(context).width >= 720;
+      return GlassScaffold(
+        // The tab bar sits below the list, on the gradient, so it never
+        // covers a card the player is trying to tap.
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 720) return content;
-              return Row(
-                children: [
-                  NavigationRail(
-                    selectedIndex: destination,
-                    labelType: NavigationRailLabelType.all,
-                    onDestinationSelected: (value) =>
-                        setState(() => destination = value),
-                    destinations: destinations
-                        .map(
-                          (item) => NavigationRailDestination(
-                            icon: item.icon,
-                            selectedIcon: item.selectedIcon,
-                            label: Text(item.label),
+          bottom: wide,
+          child: !wide
+              ? content
+              : Row(
+                  children: [
+                    NavigationRail(
+                      selectedIndex: destination,
+                      labelType: NavigationRailLabelType.all,
+                      onDestinationSelected: (value) =>
+                          setState(() => destination = value),
+                      destinations: [
+                        for (final tab in tabs)
+                          NavigationRailDestination(
+                            icon: Badge.count(
+                              count: tab.badge,
+                              isLabelVisible: tab.badge > 0,
+                              child: Icon(tab.icon),
+                            ),
+                            selectedIcon: Icon(tab.selectedIcon),
+                            label: Text(tab.label),
                           ),
-                        )
-                        .toList(),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: content),
-                ],
-              );
-            },
-          ),
+                      ],
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: content),
+                  ],
+                ),
         ),
-        bottomNavigationBar: MediaQuery.sizeOf(context).width >= 720
+        bottomBar: wide
             ? null
             : SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(32),
-                    child: NavigationBar(
-                      height: 72,
-                      elevation: 0,
-                      selectedIndex: destination,
-                      destinations: destinations,
-                      onDestinationSelected: (value) =>
-                          setState(() => destination = value),
-                    ),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                  child: GlassTabBar(
+                    tabs: tabs,
+                    selectedIndex: destination,
+                    onSelected: (value) => setState(() => destination = value),
                   ),
                 ),
               ),
