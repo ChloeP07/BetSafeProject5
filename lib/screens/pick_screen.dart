@@ -228,7 +228,6 @@ class _PickScreenState extends State<PickScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text('Choose your team. Keep it virtual.'),
           if (!game.isSimulation) ...[
             const SizedBox(height: 8),
             Row(
@@ -268,7 +267,7 @@ class _PickScreenState extends State<PickScreen> {
               child: Text(
                 'You’re backing the ${teamShortName(chosen)}',
                 style: text.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: BetSafeColors.brownStrong,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -303,40 +302,61 @@ class _PickScreenState extends State<PickScreen> {
           ),
           if (stake != null) ...[
             const SizedBox(height: 20),
-            // A green light sweeps the payout each time the stake changes.
-            Sweep(
-              trigger: stake,
-              color: const Color(0x668FE3B0),
-              child: SportsPanel(
-                color: BetSafeColors.mint,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'If your team wins',
-                      style: TextStyle(color: BetSafeColors.green),
-                    ),
-                    const SizedBox(height: 8),
-                    PayoutFigure(
-                      coins: stake * 2,
-                      style: text.headlineSmall?.copyWith(
-                        color: BetSafeColors.green,
-                        fontWeight: FontWeight.w800,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Sweep(
+                    trigger: stake,
+                    color: BetSafeColors.mint,
+                    child: SportsPanel(
+                      padding: const EdgeInsets.all(12),
+                      color: BetSafeColors.mint,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'If your team wins',
+                            style: TextStyle(color: BetSafeColors.green),
+                          ),
+                          const SizedBox(height: 6),
+                          PayoutFigure(
+                            coins: stake * 2,
+                            style: text.titleLarge?.copyWith(
+                              color: BetSafeColors.green,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Includes your $stake-coin stake. Lose: your stake is spent. Demo payout: 2×, not real betting odds.',
-                      // White, because muted text is too faint on the green glass.
-                      style: const TextStyle(
-                        color: BetSafeColors.ink,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SportsPanel(
+                    padding: const EdgeInsets.all(12),
+                    color: BetSafeColors.loss,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'If your team loses',
+                          style: TextStyle(color: BetSafeColors.lossInk),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '−$stake coins',
+                          style: text.titleLarge?.copyWith(
+                            color: BetSafeColors.lossInk,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 16),

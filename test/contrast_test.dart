@@ -57,7 +57,7 @@ Future<void> chooseBills(WidgetTester tester) async {
 
 /// The green-tinted glass of the payout panel over the page, as one opaque
 /// color: 30% of the green over the top of the gradient.
-const winGlass = Color(0xFF48536D);
+const winGlass = Color(0xFFDFE9D5);
 
 const limitUsed =
     'You’ve used all of today’s stake limit. '
@@ -85,12 +85,8 @@ void main() {
     // The payout panel on green glass.
     expectReadable(tester, 'If your team wins', winGlass);
     expectReadable(tester, '200 coins returned', winGlass);
-    expectReadable(
-      tester,
-      'Includes your 100-coin stake. Lose: your stake is spent. Demo payout: '
-      '2×, not real betting odds.',
-      winGlass,
-    );
+    expectReadable(tester, 'If your team loses', BetSafeColors.glass);
+    expectReadable(tester, '−100 coins', BetSafeColors.glass);
     // The wallet panel on glass.
     const glass = BetSafeColors.glass;
     expectReadable(tester, 'Balance now', glass);

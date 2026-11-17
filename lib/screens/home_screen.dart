@@ -161,10 +161,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-                  child: GlassTabBar(
-                    tabs: tabs,
-                    selectedIndex: destination,
-                    onSelected: (value) => setState(() => destination = value),
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      child: GlassTabBar(
+                        tabs: tabs,
+                        selectedIndex: destination,
+                        onSelected: (value) =>
+                            setState(() => destination = value),
+                      ),
+                    ),
                   ),
                 ),
               ),

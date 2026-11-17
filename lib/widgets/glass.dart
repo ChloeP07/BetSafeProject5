@@ -5,7 +5,7 @@ import 'package:glassmorphism/glassmorphism.dart';
 import '../theme.dart';
 import 'motion.dart';
 
-/// The glass style from project05: a dark purple gradient with two soft glows,
+/// The glass style from project05: a warm cream gradient with two soft glows,
 /// so the frosted panels on top have something to blur. BetSafe adds a faint
 /// yellow glow for its accent.
 class AppBackground extends StatelessWidget {
@@ -23,12 +23,12 @@ class AppBackground extends StatelessWidget {
     ),
     child: Stack(
       children: [
-        // No glows in high contrast, so text sits on plain dark.
+        // No glows in high contrast, so text sits on plain cream.
         if (!MediaQuery.highContrastOf(context)) ...const [
           Positioned(
             top: -80,
             left: -60,
-            child: _Glow(size: 260, color: Color(0x667B4DFF)),
+            child: _Glow(size: 260, color: Color(0x55CA8C59)),
           ),
           Positioned(
             top: 260,
@@ -38,7 +38,7 @@ class AppBackground extends StatelessWidget {
           Positioned(
             bottom: 40,
             left: -90,
-            child: _Glow(size: 300, color: Color(0x44C04DFF)),
+            child: _Glow(size: 300, color: Color(0x44B56636)),
           ),
         ],
         Positioned.fill(child: child),
@@ -92,6 +92,7 @@ class GlassPanel extends StatelessWidget {
     this.tint,
     this.onTap,
     this.strong = false,
+    this.dark = false,
   });
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -101,15 +102,16 @@ class GlassPanel extends StatelessWidget {
 
   /// A brighter, more opaque glass, for the panel that should stand out.
   final bool strong;
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(radius);
-    // Text and icons inside are light, whatever surrounds the panel.
+    final foreground = dark ? Colors.white : BetSafeColors.ink;
     Widget content = DefaultTextStyle.merge(
-      style: const TextStyle(color: BetSafeColors.ink),
+      style: TextStyle(color: foreground),
       child: IconTheme.merge(
-        data: const IconThemeData(color: BetSafeColors.ink),
+        data: IconThemeData(color: foreground),
         child: Padding(padding: padding, child: child),
       ),
     );
@@ -128,22 +130,24 @@ class GlassPanel extends StatelessWidget {
     if (MediaQuery.highContrastOf(context)) {
       return Container(
         decoration: BoxDecoration(
-          color: BetSafeColors.paper,
+          color: dark ? BetSafeColors.ink : BetSafeColors.paper,
           borderRadius: borderRadius,
-          border: Border.all(color: const Color(0xCCFFFFFF), width: 1.5),
+          border: Border.all(color: BetSafeColors.brownStrong, width: 1.5),
         ),
         child: content,
       );
     }
-    final base = tint ?? Colors.white;
-    final (top, bottom) = tint != null
+    final base = dark ? BetSafeColors.ink : (tint ?? Colors.white);
+    final (top, bottom) = dark
+        ? (.88, .80)
+        : tint != null
         ? (.30, .10)
         : strong
-        ? (.22, .08)
-        : (.15, .05);
+        ? (.70, .35)
+        : (.62, .28);
     return GlassmorphicContainer(
       borderRadius: radius,
-      blur: 14,
+      blur: dark ? 20 : 14,
       border: 1,
       linearGradient: LinearGradient(
         begin: Alignment.topLeft,
@@ -157,8 +161,12 @@ class GlassPanel extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          (tint ?? Colors.white).withValues(alpha: strong ? .55 : .35),
-          Colors.white.withValues(alpha: .08),
+          dark
+              ? const Color(0x99F3D0AE)
+              : (tint ?? BetSafeColors.brownStrong).withValues(
+                  alpha: strong ? .55 : .25,
+                ),
+          Colors.white.withValues(alpha: dark ? .18 : .08),
         ],
       ),
       child: content,
@@ -176,7 +184,7 @@ class GlassTab {
   final int badge;
 }
 
-/// project05's segmented tab bar on glass: the chosen tab slides in a purple
+/// project05's segmented tab bar on glass: the chosen tab slides in a yellow
 /// pill, and a count badge bounces when it changes.
 class GlassTabBar extends StatelessWidget {
   const GlassTabBar({
@@ -194,6 +202,7 @@ class GlassTabBar extends StatelessWidget {
     padding: const EdgeInsets.all(6),
     radius: 22,
     strong: true,
+    dark: true,
     child: Row(
       children: [
         for (final (index, tab) in tabs.indexed)
@@ -221,7 +230,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? BetSafeColors.ink : BetSafeColors.muted;
+    final color = selected ? BetSafeColors.onAccent : Colors.white;
     final still = !Motion.on(context);
     Widget badge = _CountBadge(count: tab.badge);
     if (!still) {
@@ -250,9 +259,7 @@ class _TabButton extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 52),
           padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
           decoration: BoxDecoration(
-            color: selected
-                ? BetSafeColors.purpleStrong.withValues(alpha: .9)
-                : Colors.transparent,
+            color: selected ? BetSafeColors.yellow : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           // No alignment here: it would stretch the tab to the full height.

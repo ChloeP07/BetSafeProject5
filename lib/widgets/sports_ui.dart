@@ -112,6 +112,9 @@ class TeamBadge extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
+          ),
+          foregroundDecoration: BoxDecoration(
+            shape: BoxShape.circle,
             border: Border.all(color: ring, width: 2),
           ),
           child: provided != null && provided.isNotEmpty
@@ -287,25 +290,8 @@ class MatchTicket extends StatelessWidget {
             child: ExcludeSemantics(
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.sports_football, size: 16),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'NFL',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(width: 12),
-                      // A long status wraps inside its pill on narrow screens.
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: GameStatusPill(game: game),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                  GameStatusPill(game: game),
+                  const SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -340,7 +326,9 @@ class MatchTicket extends StatelessWidget {
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
-                                if (showScore) ...[
+                                if (showScore &&
+                                    (game.status != 'final' ||
+                                        game.isTied)) ...[
                                   const SizedBox(height: 4),
                                   Text(
                                     game.status == 'live'

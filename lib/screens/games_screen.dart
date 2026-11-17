@@ -490,7 +490,7 @@ class _CoinChip extends StatelessWidget {
     // The balance drops into place whenever it changes.
     Widget coins = Text(
       MaterialLocalizations.of(context).formatDecimal(state.coins),
-      style: _type(15, 800, Colors.white),
+      style: _type(15, 800),
       semanticsLabel: '${state.coins} virtual coins',
     );
     if (Motion.on(context)) {
@@ -570,23 +570,22 @@ class _GameCard extends StatelessWidget {
               .formatTimeOfDay(TimeOfDay.fromDateTime(kickoff));
     final timeParts = time?.split(' ');
     final until = kickoff?.difference(now);
-    const foreground = _ink;
-    const muted = _muted;
+    final foreground = featured ? Colors.white : _ink;
+    final muted = featured ? const Color(0xFFF3E4D4) : _muted;
     final canOpenPick = game.canPick && pick == null;
     final isFinal = game.status == 'final';
     final isLive = game.status == 'live';
-    final hasScore = game.awayScore != null && game.homeScore != null;
     final closed = pick == null && !isFinal ? game.closedReason : null;
     final radius = featured ? 28.0 : 20.0;
 
     // The big middle line: a score once there is one, otherwise the kickoff.
     final headline = isFinal
-        ? (hasScore ? '${game.awayScore} : ${game.homeScore}' : 'Game ended')
+        ? 'Game ended'
         : isLive
         ? '${game.awayScore ?? '–'} : ${game.homeScore ?? '–'}'
         : (timeParts?.first ?? (game.isSimulation ? 'Demo' : 'TBD'));
     final caption = isFinal
-        ? (game.isTied ? 'Tied' : 'Final')
+        ? null
         : isLive
         ? 'Live'
         : game.tone == GameTone.waiting
@@ -598,7 +597,7 @@ class _GameCard extends StatelessWidget {
         : null;
 
     // Picks on the featured card, and a team already picked, take the yellow
-    // accent; other cards use purple.
+    // accent; other cards use brown.
     Widget action(_Club club) {
       final picked = pick?.team == club.name;
       return Expanded(
@@ -618,13 +617,13 @@ class _GameCard extends StatelessWidget {
       );
     }
 
-    // A glass card; the featured one is brighter and tinted purple. The whole
+    // A glass card; the featured one is brighter and tinted warm brown. The whole
     // card opens the game. Screen readers use the buttons instead.
     return GlassPanel(
       radius: radius,
       padding: EdgeInsets.zero,
       strong: featured,
-      tint: featured ? BetSafeColors.purple : null,
+      dark: featured,
       onTap: onOpen == null ? null : () => onOpen!(null),
       child: Column(
         children: [
@@ -651,7 +650,9 @@ class _GameCard extends StatelessWidget {
               children: [
                 Semantics(
                   container: true,
-                  label: game.matchupDescription,
+                  label: isFinal
+                      ? '${game.away} at ${game.home}. Game ended.'
+                      : game.matchupDescription,
                   child: ExcludeSemantics(
                     child: Column(
                       children: [
@@ -674,8 +675,8 @@ class _GameCard extends StatelessWidget {
                                 until == null || until.isNegative
                                     ? 'Kickoff now'
                                     : 'Kickoff in ${until.inHours}h ${until.inMinutes % 60}m',
-                                color: _ink,
-                                background: BetSafeColors.soft,
+                                color: Colors.white,
+                                background: Colors.white24,
                               ),
                             ],
                           ),
@@ -686,11 +687,7 @@ class _GameCard extends StatelessWidget {
                           children: [
                             Expanded(
                               flex: 5,
-                              child: away.badge(
-                                foreground,
-                                featured: featured,
-                                won: game.winner == away.name,
-                              ),
+                              child: away.badge(foreground, featured: featured),
                             ),
                             Expanded(
                               flex: 4,
@@ -706,9 +703,9 @@ class _GameCard extends StatelessWidget {
                                       headline,
                                       textAlign: TextAlign.center,
                                       style: _type(
-                                        featured ? 34 : 18,
+                                        isFinal ? 13 : (featured ? 34 : 18),
                                         900,
-                                        foreground,
+                                        isFinal ? muted : foreground,
                                       ),
                                     ),
                                     if (caption != null)
@@ -723,11 +720,7 @@ class _GameCard extends StatelessWidget {
                             ),
                             Expanded(
                               flex: 5,
-                              child: home.badge(
-                                foreground,
-                                featured: featured,
-                                won: game.winner == home.name,
-                              ),
+                              child: home.badge(foreground, featured: featured),
                             ),
                           ],
                         ),
@@ -815,43 +808,21 @@ class _Club {
     );
   }
 
-  Widget badge(Color foreground, {required bool featured, bool won = false}) =>
-      Column(
-        children: [
-          TeamBadge(
-            team: name,
-            code: code,
-            logoUrl: logo,
-            heroTag: heroTag,
-            size: featured ? 64 : 52,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            featured ? name : name.split(' ').last,
-            textAlign: TextAlign.center,
-            style: _type(12, won ? 900 : 700, foreground),
-          ),
-          if (won)
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 3,
-              children: [
-                Icon(
-                  Icons.emoji_events,
-                  size: 13,
-                  color: featured ? _yellow : BetSafeColors.green,
-                ),
-                Text(
-                  'Winner',
-                  style: _type(
-                    11,
-                    800,
-                    featured ? _yellow : BetSafeColors.green,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      );
+  Widget badge(Color foreground, {required bool featured}) => Column(
+    children: [
+      TeamBadge(
+        team: name,
+        code: code,
+        logoUrl: logo,
+        heroTag: heroTag,
+        size: featured ? 64 : 52,
+      ),
+      const SizedBox(height: 6),
+      Text(
+        featured ? name : name.split(' ').last,
+        textAlign: TextAlign.center,
+        style: _type(12, 700, foreground),
+      ),
+    ],
+  );
 }
