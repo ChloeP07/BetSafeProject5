@@ -22,7 +22,7 @@ Future<bool> showPickConfirmation(
     side: .btt,
     useSafeArea: true,
     mainAxisMaxRatio: null,
-    // A solid dark purple sheet with a bright glass edge, so its figures stay
+    // A solid cream sheet with a bright glass edge, so its figures stay
     // readable over whatever is behind it.
     builder: (_) => DecoratedBox(
       decoration: const BoxDecoration(
