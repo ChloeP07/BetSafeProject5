@@ -6,7 +6,7 @@
 | Member 2 | `games-picks` | Games/pick screens |
 | Member 3 | `server-nfl-data` | Server, database, sports provider, API contract |
 | Member 4 | `game-results` | Game progress, results, score refresh; coordinate settlement with Member 3 |
-| Member 5 | `collection-demo` | Collection, reward presentation, demo video |
+| Member 5 | `collection-demo` | Collection, card details, reward presentation |
 
 All five branches were created locally from the current main baseline. Your checkout is on setup-integration. Branch creation does not publish anything to GitHub. Existing work was already committed before these branches were created; new setup work belongs on setup-integration.
 
@@ -55,11 +55,15 @@ Each teammate can publish their own branch using the same command with their bra
 - [x] Android APK build and emulator preview verified
 - [x] Local branches and ownership defined
 - [x] Root-level setup/check/server commands and PR handoff checklist
+- [x] One-command Android launcher with emulator selection and server health check
 - [x] Verify baseline main CI (server, Android, iOS all succeeded)
-- [ ] Publish your reviewed setup branch and verify its new CI checks
+- [x] Publish NFL integration and verify all three CI jobs (also integrated into main)
+- [ ] Commit/publish final launcher, CI and handoff changes; verify their new checks
 - [ ] Confirm every teammate can run the app and server
 - [ ] Integrate reviewed feature branches into main
 - [ ] Verify iPhone later (Android is the current preview target)
-- [ ] Confirm final due date and assemble the narrated MVP demo
+- [ ] Confirm final due date and coordinate final acceptance with the chosen presenter
 
 Baseline verification: [successful workflow run](https://github.com/ChloeP07/BetSafeProject5/actions/runs/41811150109) for commit b9bfbb1. This verifies the pushed foundation; new branch-only changes still need to be committed/pushed by you before remote CI can check them.
+
+See SETUP_HANDOFF.md for the final setup checklist and remaining team coordination. Presentation is a shared assignment, separate from collectible development.
