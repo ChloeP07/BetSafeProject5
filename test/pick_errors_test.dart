@@ -56,12 +56,7 @@ void main() {
 
   test('unknown errors pass through unchanged', () {
     expect(friendlyPickError('Something new.'), 'Something new.');
-    expect(
-      friendlyPickError(
-        'Cannot reach the demo server. Check that it is running and try again.',
-      ),
-      'Cannot reach the demo server. Check that it is running and try again.',
-    );
+    expect(friendlyPickError(ApiMessages.offline), ApiMessages.offline);
   });
 
   Future<void> rejectWith(WidgetTester tester, String error) async {

@@ -26,7 +26,7 @@ Future<BetSafeApi> openRejectingPick(
   addTearDown(tester.view.resetDevicePixelRatio);
   final api = BetSafeApi(
     client: MockClient((request) async {
-      if (offline?.call() ?? false) throw Exception('offline');
+      if (offline?.call() ?? false) throw http.ClientException('offline');
       if (request.method == 'POST') {
         return http.Response(
           jsonEncode({'error': 'Not enough virtual coins.'}),
@@ -73,10 +73,10 @@ void main() {
     offline = true;
     await api.refresh();
     await tester.pumpAndSettle();
-    expect(find.textContaining('Cannot reach the demo server'), findsOneWidget);
+    expect(find.text(ApiMessages.offline), findsOneWidget);
     await tester.tap(find.text('50 coins'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Cannot reach the demo server'), findsOneWidget);
+    expect(find.text(ApiMessages.offline), findsOneWidget);
     expect(find.byType(PickScreen), findsOneWidget);
   });
 
