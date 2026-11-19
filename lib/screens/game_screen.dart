@@ -17,7 +17,15 @@ class GameScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
     builder: (context, _) {
-      final game = api.state!.games.firstWhere((item) => item.id == gameId);
+      // The game can drop out of the server's data while this page is open,
+      // for example when the NFL feed's date window moves past it.
+      final game = api.state!.gameById(gameId);
+      if (game == null) {
+        return const GameGonePage(
+          title: 'Game details',
+          message: 'It has dropped off the schedule, so there is nothing more to show here.',
+        );
+      }
       final pick = api.state!.pickFor(gameId);
       final text = Theme.of(context).textTheme;
       final feedNotice = api.state!.nfl.description;

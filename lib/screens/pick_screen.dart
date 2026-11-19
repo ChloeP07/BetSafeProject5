@@ -149,21 +149,9 @@ class _PickScreenState extends State<PickScreen> {
       final state = api.state!;
       final game = state.gameById(widget.gameId);
       if (game == null) {
-        return DetailPage(
+        return const GameGonePage(
           title: 'Make your pick',
-          children: [
-            const EmptyMessage(
-              title: 'This game is no longer available',
-              message: 'It has dropped off the schedule, so there is nothing to pick here.',
-              icon: Icons.event_busy,
-            ),
-            FButton(
-              variant: .outline,
-              size: .lg,
-              onPress: () => Navigator.of(context).pop(),
-              child: const ButtonLabel('Back to games'),
-            ),
-          ],
+          message: 'It has dropped off the schedule, so there is nothing to pick here.',
         );
       }
       final text = Theme.of(context).textTheme;

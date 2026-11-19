@@ -129,3 +129,28 @@ class ServerError extends StatelessWidget {
     ),
   );
 }
+
+/// A pushed page for a game that is no longer in the server's data, for
+/// example after the NFL feed's date window moved past it. It says so and
+/// offers a way back, instead of failing to draw the page.
+class GameGonePage extends StatelessWidget {
+  const GameGonePage({super.key, required this.title, required this.message});
+  final String title, message;
+  @override
+  Widget build(BuildContext context) => DetailPage(
+    title: title,
+    children: [
+      EmptyMessage(
+        title: 'This game is no longer available',
+        message: message,
+        icon: Icons.event_busy,
+      ),
+      FButton(
+        variant: .outline,
+        size: .lg,
+        onPress: () => Navigator.of(context).pop(),
+        child: const ButtonLabel('Back to games'),
+      ),
+    ],
+  );
+}
